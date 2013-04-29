@@ -160,7 +160,7 @@
 							</addDefaultImplementationEntries>
 						</manifest>
 						<manifestEntries>
-							<Premain-Class>jenergy.Agent</Premain-Class>
+							<Premain-Class>jenergy.agent.Agent</Premain-Class>
 							<Can-Redefine-Classes>true</Can-Redefine-Classes>
 						</manifestEntries>
 					</archive>

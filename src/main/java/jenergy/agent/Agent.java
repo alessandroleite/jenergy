@@ -21,17 +21,25 @@ import jenergy.utils.ClassUtils;
 
 public final class Agent
 {
-    private static Instrumentation instrumentation;
 
-    public static Instrumentation getInstrumentation()
+    /**
+     * Private constructor to avoid instance of this class.
+     */
+    private Agent()
     {
-        return instrumentation;
+        throw new UnsupportedOperationException();
     }
 
+    /**
+     * The method to start the instrumentation of the program.
+     * 
+     * @param agentArgs
+     *            The agent's arguments. This agent does not require any argument.
+     * @param inst
+     *            The instrumentation mechanism provides by the JVM.
+     */
     public static void premain(String agentArgs, Instrumentation inst)
     {
-        instrumentation = inst;
-
         Thread.currentThread().setName("JEnergy Profile");
         System.out.println("+-----------------------------------------------------+");
         System.out.println("|                JEnergy Profile 0.0.1                |");
@@ -54,7 +62,7 @@ public final class Agent
             }
         });
 
-        ProfileManager.start();
+        Cpu.getInstance().activate();
         org.jboss.aop.standalone.Agent.premain("-hotSwap", inst);
     }
 }
