@@ -18,6 +18,7 @@ package jenergy.profile.data;
 import java.io.Serializable;
 import java.math.BigDecimal;
 
+import jenergy.agent.Cpu.CpuInfo;
 import jenergy.utils.Timer;
 
 public final class ThreadInfo implements Serializable
@@ -33,14 +34,14 @@ public final class ThreadInfo implements Serializable
     private final long id;
 
     /**
-     * The thread name.
+     * The CPU times of this thread.
      */
-    private final String name;
-
+    private final CpuInfo cpuInfo;
+    
     /**
      * The computation times of the thread.
      */
-    private final Times times;
+    private Times times;
 
     /**
      * The timer with the time spend by the thread.
@@ -65,7 +66,8 @@ public final class ThreadInfo implements Serializable
      */
     public ThreadInfo(long tid)
     {
-        this(tid, Thread.currentThread().getName());
+        this.id = tid;
+        this.cpuInfo = new CpuInfo();
     }
 
     /**
@@ -80,37 +82,6 @@ public final class ThreadInfo implements Serializable
     {
         this(tid);
         this.timer = timerInstance;
-    }
-
-    /**
-     * Creates a new {@link ThreadInfo} instance of a given thread.
-     * 
-     * @param tid
-     *            The thread ID. Might be greater than zero.
-     * @param threadName
-     *            The thread name. Might not be <code>null</code> or empty.
-     */
-    public ThreadInfo(long tid, String threadName)
-    {
-        this.id = tid;
-        this.name = threadName;
-        this.times = new Times();
-    }
-
-    /**
-     * Creates a new {@link ThreadInfo} instance of a given thread.
-     * 
-     * @param tid
-     *            The thread ID. Might be greater than zero.
-     * @param threadName
-     *            The thread name. Might not be <code>null</code> or empty.
-     * @param threadTimer
-     *            The {@link Timer}'s instance.
-     */
-    public ThreadInfo(long tid, String threadName, Timer threadTimer)
-    {
-        this(tid, threadName);
-        this.timer = threadTimer;
     }
 
     /**
@@ -156,11 +127,11 @@ public final class ThreadInfo implements Serializable
     }
 
     /**
-     * @return the name
+     * @param newTimesInstance the times to set
      */
-    public String getName()
+    public void setTimes(Times newTimesInstance)
     {
-        return name;
+        this.times = newTimesInstance;
     }
 
     /**
@@ -186,5 +157,13 @@ public final class ThreadInfo implements Serializable
     public void setManagementInfo(java.lang.management.ThreadInfo threadInfo)
     {
         this.managementInfo = threadInfo;
+    }
+
+    /**
+     * @return the cpuInfo
+     */
+    public CpuInfo getCpuInfo()
+    {
+        return cpuInfo;
     }
 }

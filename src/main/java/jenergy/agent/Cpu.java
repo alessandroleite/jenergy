@@ -17,15 +17,15 @@ package jenergy.agent;
 
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import jenergy.profile.MethodProfiler;
 import jenergy.profile.ThreadProfiler;
+import jenergy.profile.data.ThreadInfo;
 
-public final class Cpu implements Runnable
+public final class Cpu
 {
     /**
      * Global instance of the CPU.
@@ -33,34 +33,23 @@ public final class Cpu implements Runnable
     private static final Cpu INSTANCE = new Cpu();
 
     /**
-     * 
+     * The time sampling defined by the system's variable (-D) <em>jenergy.time.sampling</em> in milliseconds. The default is 10 milliseconds.
+     */
+    private static final Long DEFAULT_TIME_SAMPLING = Long.parseLong(System.getProperty("jenergy.time.sampling", "10"));
+
+    /**
+     * The thread executed by the CPU.
      */
     private final Map<Long, ThreadProfiler> threads = new ConcurrentHashMap<Long, ThreadProfiler>();
 
     /**
-     * 
-     */
-    private final Map<String, List<MethodProfiler>> methods = new ConcurrentHashMap<String, List<MethodProfiler>>();
-
-    /**
-     * The data of this CPU.
-     */
-    private final CpuInfo cpuInfo = new CpuInfo();
-    
-    
-    /**
-     * Flag to indicate if the CPU is active.
-     */
-    private volatile boolean active;
-
-    /**
-     * Private constructor to avoid instance of this class.
+     * Private constructor to avoid more than one instance of this class.
      */
     private Cpu()
     {
     }
 
-    private static final class CpuInfo
+    public static final class CpuInfo
     {
         /**
          * The CPU cycle duration.
@@ -68,7 +57,7 @@ public final class Cpu implements Runnable
         private volatile long cycleDuration;
 
         /**
-         * The CPU computation time. This time means how long the CPU is active.
+         * The CPU computation time. This time means how long the CPU was active.
          */
         private volatile long computationTime;
 
@@ -77,11 +66,28 @@ public final class Cpu implements Runnable
          */
         public void updateCycleDuration()
         {
-            synchronized (this)
-            {
-                this.cycleDuration = System.currentTimeMillis() - computationTime;
-                this.computationTime = System.currentTimeMillis();
-            }
+            this.cycleDuration = System.currentTimeMillis() - computationTime;
+            this.computationTime = System.currentTimeMillis();
+        }
+
+        /**
+         * Returns the CPU computation time.
+         * 
+         * @return the CPU computation time.
+         */
+        public long computationTime()
+        {
+            return this.computationTime;
+        }
+
+        /**
+         * Returns the CPU cycle duration.
+         * 
+         * @return THe CPU cycle duration.
+         */
+        public long cycleDuration()
+        {
+            return this.cycleDuration;
         }
     }
 
@@ -103,32 +109,19 @@ public final class Cpu implements Runnable
      */
     public MethodProfiler monitor(Method method)
     {
-        synchronized (this.methods)
+        MethodProfiler profiler = new MethodProfiler(method, this);
+        ThreadProfiler threadProfiler = this.threads.get(profiler.getInfo().getThreadId());
+
+        if (threadProfiler == null)
         {
-            MethodProfiler profiler = new MethodProfiler(method, this);
-            ThreadProfiler threadProfiler = this.threads.get(profiler.getInfo().getThreadId());
-
-            if (threadProfiler == null)
-            {
-                threadProfiler = this.monitor(Thread.currentThread());
-            }
-
-            profiler.getInfo().setThreadInfo(threadProfiler.getThreadInfo());
-
-            List<MethodProfiler> profiles = this.methods.get(method.getName());
-
-            if (profiles == null)
-            {
-                profiles = new ArrayList<MethodProfiler>();
-            }
-
-            profiles.add(profiler);
-
-            this.methods.put(method.getName(), profiles);
-
-            new Thread(profiler).start();
-            return profiler;
+            threadProfiler = new ThreadProfiler(this, profiler.getInfo().getThreadId(), DEFAULT_TIME_SAMPLING);
+            this.threads.put(threadProfiler.getThreadInfo().getId(), threadProfiler);            
+            new Thread(threadProfiler, "Thread times monitor").start();
         }
+        
+
+        threadProfiler.addMethod(profiler);
+        return profiler;
     }
 
     /**
@@ -139,10 +132,21 @@ public final class Cpu implements Runnable
      */
     public ThreadProfiler monitor(Thread thread)
     {
-        ThreadProfiler profiler = new ThreadProfiler(this, thread.getId());
-        this.threads.put(thread.getId(), profiler);
+        return this.monitor(thread.getId());
+    }
 
-        new Thread(profiler).start();
+    /**
+     * 
+     * @param threadId
+     *            The thread to be monitored. Might not be <code>zero</code>.
+     * @return The instance of the {@link ThreadProfiler}.
+     */
+    public ThreadProfiler monitor(long threadId)
+    {
+        ThreadProfiler profiler = new ThreadProfiler(this, threadId, DEFAULT_TIME_SAMPLING);
+        this.threads.put(threadId, profiler);
+
+        // new Thread(profiler).start();
         return profiler;
     }
 
@@ -157,26 +161,6 @@ public final class Cpu implements Runnable
     }
 
     /**
-     * Returns the CPU computation time.
-     * 
-     * @return the CPU computation time.
-     */
-    public long computationTime()
-    {
-        return this.cpuInfo.computationTime;
-    }
-
-    /**
-     * Returns the CPU cycle duration.
-     * 
-     * @return THe CPU cycle duration.
-     */
-    public long cycleDuration()
-    {
-        return this.cpuInfo.cycleDuration;
-    }
-
-    /**
      * Returns the power consumption of a given thread.
      * 
      * @param threadId
@@ -188,21 +172,85 @@ public final class Cpu implements Runnable
         return threads.get(threadId).getThreadInfo().getPower();
     }
 
-    @Override
-    public void run()
+    /**
+     * Returns the data ({@link ThreadInfo}) about a given {@link Thread}.
+     * 
+     * @param tid
+     *            The thread id to get the data.
+     * @return The data of the given {@link Thread} or <code>null</code> if the given thread does not exist anymore.
+     */
+    public ThreadInfo getThread(long tid)
     {
-        while (active)
-        {
-            this.cpuInfo.updateCycleDuration();
-        }
+        ThreadProfiler threadProfiler = getThreadProfiler(tid);
+        return threadProfiler != null ? threadProfiler.getThreadInfo() : null;
     }
 
     /**
-     * Starts the CPU's thread.
+     * Returns the data ({@link ThreadProfiler}) about a given {@link Thread}.
+     * 
+     * @param tid
+     *            The thread id to get the data.
+     * @return The data of the given {@link Thread} or <code>null</code> if the given thread does not exist anymore.
+     */
+    public ThreadProfiler getThreadProfiler(long tid)
+    {
+        return this.threads.get(tid);
+    }
+
+    /**
+     * Returns the total CPU time so far in nanoseconds.
+     * 
+     * @return the total CPU time so far in nanoseconds.
+     */
+    public long getTotalCpuTime()
+    {
+        final Collection<ThreadProfiler> threadHistory = threads.values();
+
+        long time = 0L;
+
+        for (ThreadProfiler times : threadHistory)
+        {
+            time += times.getThreadInfo().getTimes().getCpuTime().time();
+        }
+
+        return time;
+    }
+
+    /**
+     * Returns the total user time so far in nanoseconds.
+     * 
+     * @return The total user time so far in nanoseconds.
+     */
+    public long getTotalUserTime()
+    {
+        final Collection<ThreadProfiler> threadHistory = threads.values();
+
+        long time = 0L;
+
+        for (ThreadProfiler times : threadHistory)
+        {
+            time += times.getThreadInfo().getTimes().getUserTime().time();
+        }
+
+        return time;
+    }
+
+    /**
+     * Returns the total system time so far in nanoseconds.
+     * 
+     * @return The total system time so far in nanoseconds.
+     */
+    public long getTotalSystemTime()
+    {
+        return getTotalCpuTime() - getTotalUserTime();
+    }
+
+    /**
+     * Starts the {@link ThreadTimesMonitor} to collect the data.
      */
     public void activate()
     {
-        active = true;
-        new Thread(this).start();
+        //long interval = Long.parseLong(System.getProperty("jenergy.collect.interval", "10"));
+        //new ThreadTimesMonitor(interval, this).start();
     }
 }

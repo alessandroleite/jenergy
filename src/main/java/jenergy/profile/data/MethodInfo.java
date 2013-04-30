@@ -18,6 +18,7 @@ package jenergy.profile.data;
 import java.io.Serializable;
 import java.math.BigDecimal;
 
+import jenergy.agent.Cpu.CpuInfo;
 import jenergy.utils.Timer;
 
 import org.apache.commons.lang.builder.ToStringBuilder;
@@ -42,11 +43,11 @@ public final class MethodInfo implements Serializable
     private final Timer timer;
 
     /**
-     * The method times.
+     * The method's times.
      */
-//    private Times times;
-    
-    private ThreadInfo threadInfo;
+    private Times times;
+
+    // private ThreadInfo threadInfo;
 
     /**
      * The method name.
@@ -57,6 +58,11 @@ public final class MethodInfo implements Serializable
      * The thread id.
      */
     private long threadId;
+    
+    /**
+     * The method's Cpu data.
+     */
+    private final CpuInfo cpuInfo;
 
     /**
      * The cpu power consumption.
@@ -73,6 +79,7 @@ public final class MethodInfo implements Serializable
     {
         this.methodName = name;
         this.timer = methodTimer;
+        this.cpuInfo = new CpuInfo();
     }
 
     /**
@@ -115,13 +122,21 @@ public final class MethodInfo implements Serializable
     {
         return this.timer.time();
     }
-    
+
     /**
      * @return the times
      */
     public Times getTimes()
     {
-        return getThreadInfo().getTimes();
+        return times;
+    }
+    
+    /**
+     * @param newTimesInstance the times to set
+     */
+    public void setTimes(Times newTimesInstance)
+    {
+        this.times = newTimesInstance;
     }
 
     /**
@@ -133,7 +148,8 @@ public final class MethodInfo implements Serializable
     }
 
     /**
-     * @param newCpuPowerValue the cpuPower to set
+     * @param newCpuPowerValue
+     *            the cpuPower to set
      */
     public void setCpuPower(BigDecimal newCpuPowerValue)
     {
@@ -165,19 +181,11 @@ public final class MethodInfo implements Serializable
     }
     
     /**
-     * @return the threadInfo
+     * @return the cpuInfo
      */
-    public ThreadInfo getThreadInfo()
+    public CpuInfo getCpuInfo()
     {
-        return threadInfo;
-    }
-
-    /**
-     * @param thInfo the threadInfo to set
-     */
-    public void setThreadInfo(ThreadInfo thInfo)
-    {
-        this.threadInfo = thInfo;
+        return cpuInfo;
     }
 
     @Override

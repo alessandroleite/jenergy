@@ -17,14 +17,25 @@ package jenergy.profile;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
-import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import jenergy.agent.Cpu;
+import jenergy.profile.data.Period;
 import jenergy.profile.data.ThreadInfo;
+import jenergy.profile.data.Times;
 import jenergy.utils.Timer;
 
 public class ThreadProfiler implements Profiler
 {
+    
+    /**
+     * The method statistics executed in this thread.
+     */
+    private final Map<String, List<MethodProfiler>> threadMethods = new ConcurrentHashMap<String, List<MethodProfiler>>();
+    
     /**
      * The Cpu instance of the thread.
      */
@@ -38,8 +49,15 @@ public class ThreadProfiler implements Profiler
     /**
      * The state of this thread profiler.
      */
-    private volatile State state;
+    // private volatile State state;
 
+    private final long timeSample;
+    
+    /**
+     * The thread id of this monitor. 
+     */
+    private final long monitorThreadId;
+    
     /**
      * Creates a new {@link ThreadProfiler} instance with the CPU and thread id.
      * 
@@ -47,33 +65,95 @@ public class ThreadProfiler implements Profiler
      *            The thread's CPU. Might not be <code>null</code>.
      * @param tid
      *            The thread id. Might not be <code>null</code>.
+     * @param timeSampling
+     *            The time sampling of this thread.
      */
-    public ThreadProfiler(Cpu threadCpu, Long tid)
+    public ThreadProfiler(Cpu threadCpu, Long tid, Long timeSampling)
     {
         this.cpu = threadCpu;
         threadInfo = new ThreadInfo(tid, Timer.start());
-        this.state = State.CREATED;
+        // this.state = State.CREATED;
+        this.timeSample = timeSampling;
+        this.monitorThreadId = Thread.currentThread().getId();
     }
 
     @Override
     public void run()
     {
-        if (State.CREATED.equals(this.state()))
+        while (!Thread.currentThread().isInterrupted())
         {
-            state = State.RUNNING;
-        }
-
-        final ThreadMXBean mxBean = ManagementFactory.getThreadMXBean();
-
-        while (State.RUNNING.equals(this.state()))
-        {
-            if (mxBean != null)
+            update();
+            try
             {
-                double threadCpuTime = mxBean.getThreadCpuTime(threadInfo.getId()) / 1000000.0d;
-                threadInfo.setPower(BigDecimal.valueOf(threadCpuTime * cpu.power() / cpu.cycleDuration()));
-                threadInfo.getTimes().setCpuTime(mxBean.getThreadCpuTime(threadInfo.getId()));
-                threadInfo.getTimes().setUserTime(mxBean.getThreadUserTime(threadInfo.getId()));
-                threadInfo.setManagementInfo(mxBean.getThreadInfo(threadInfo.getId()));
+                Thread.sleep(timeSample);
+            }
+            catch (InterruptedException exception)
+            {
+                break;
+            }
+        }
+        
+        
+        /*
+         * if (State.CREATED.equals(this.state())) { state = State.RUNNING; }
+         * 
+         * final ThreadMXBean mxBean = ManagementFactory.getThreadMXBean();
+         * 
+         * while (State.RUNNING.equals(this.state())) { final long threadCpuTime = mxBean.getThreadCpuTime(threadInfo.getId());
+         * 
+         * if (mxBean != null && threadCpuTime > 0) { if (this.threadInfo.getCpuInfo().cycleDuration() > 0) { threadInfo
+         * .setPower(BigDecimal.valueOf((threadCpuTime / 1000000.0d) * cpu.power() / this.threadInfo.getCpuInfo().cycleDuration()));
+         * threadInfo.getTimes().setCpuTime(threadCpuTime); threadInfo.getTimes().setUserTime(mxBean.getThreadUserTime(threadInfo.getId()));
+         * threadInfo.setManagementInfo(mxBean.getThreadInfo(threadInfo.getId())); } else { System.out.println("cycle duration was zero !!!!"); } } }
+         */
+    }
+    
+    
+    /**
+     * Update the hash table of thread times.
+     */
+    private void update()
+    {
+        final ThreadMXBean bean = ManagementFactory.getThreadMXBean();
+        final long[] ids = bean.getAllThreadIds();
+
+        this.getThreadInfo().getCpuInfo().updateCycleDuration();
+        
+        for (long id : ids)
+        {
+            
+            if (id == monitorThreadId)
+            {
+                continue;
+            }
+
+            final long cpuTime = bean.getThreadCpuTime(id);
+            final long userTime = bean.getThreadUserTime(id);
+
+            if (cpuTime == -1 || userTime == -1)
+            {
+                continue;
+            }
+
+            ThreadInfo info = cpu.getThread(id);
+            
+            if (info == null)
+            {
+                // info = cpu.monitor(id).getThreadInfo();
+                continue;
+            }
+            
+            Times times = info.getTimes();
+            
+            if (times == null)
+            {
+                times = new Times(id, new Period(cpuTime, cpuTime), new Period(userTime, userTime));
+                info.setTimes(times);
+            }
+            else
+            {
+                times.getCpuTime().setEndTime(cpuTime);
+                times.getUserTime().setEndTime(userTime);
             }
         }
     }
@@ -81,14 +161,36 @@ public class ThreadProfiler implements Profiler
     @Override
     public State state()
     {
-        return state;
+        // return state;
+        return null;
     }
 
     @Override
     public void stop()
     {
-        this.state = State.FINISHED;
-        this.threadInfo.getTimer().stop();
+        // if (!State.FINISHED.equals(state))
+        // {
+        // this.state = State.FINISHED;
+        // this.threadInfo.getTimer().stop();
+        // }
+    }
+
+    /**
+     * Add a new method execution of this thread.
+     * 
+     * @param method
+     *            The method execution of this thread to be monitored.
+     */
+    public void addMethod(MethodProfiler method)
+    {
+        List<MethodProfiler> methodList = this.threadMethods.get(method.getInfo().getMethodName());
+
+        if (methodList == null)
+        {
+            methodList = new CopyOnWriteArrayList<MethodProfiler>();
+            this.threadMethods.put(method.getInfo().getMethodName(), methodList);
+        }
+        methodList.add(method);
     }
 
     /**
@@ -101,4 +203,14 @@ public class ThreadProfiler implements Profiler
         return threadInfo;
     }
 
+    /**
+     * Update the thread profile state.
+     * 
+     * @param newState
+     *            The new state to be set.
+     */
+    // protected void setState(State newState)
+    // {
+    // this.state = newState;
+    // }
 }

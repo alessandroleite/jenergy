@@ -33,7 +33,7 @@ import org.jboss.aop.joinpoint.Invocation;
  * http://docs.jboss.org/jbossaop/docs/2.0.0.GA/docs/aspect-framework/reference/en/html/pointcuts.html
  */
 @Bind(pointcut = "execution(* $instanceof{java.lang.Thread}->run(..)) or execution(* $instanceof{java.lang.Runnable}->run(..)) " +
-        " and !execution(* jenergy.*->*(..))")
+         " and !execution(* jenergy.*->*(..))")
 @InterceptorDef(scope = Scope.PER_VM)
 public class ThreadInterceptor implements Interceptor
 {
@@ -48,13 +48,18 @@ public class ThreadInterceptor implements Interceptor
     public Object invoke(Invocation invocation) throws Throwable
     {
         final ThreadProfiler profiler = Cpu.getInstance().monitor(Thread.currentThread());
+        Object result;
         try
         {
-            return invocation.invokeNext();
+            profiler.getThreadInfo().getCpuInfo().updateCycleDuration();
+            result = invocation.invokeNext();
         }
         finally
         {
+            profiler.getThreadInfo().getCpuInfo().updateCycleDuration();
             profiler.stop();
         }
+
+        return result;
     }
 }

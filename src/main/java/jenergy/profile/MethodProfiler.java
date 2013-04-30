@@ -16,7 +16,6 @@
 package jenergy.profile;
 
 import java.lang.reflect.Method;
-import java.math.BigDecimal;
 
 import jenergy.agent.Cpu;
 import jenergy.profile.data.MethodInfo;
@@ -38,7 +37,7 @@ public final class MethodProfiler implements Profiler
      * The CPU instance used to execute the method.
      */
     private final Cpu cpu;
-
+    
     /**
      * Creates an instance of the profile for the given method.
      * 
@@ -60,23 +59,50 @@ public final class MethodProfiler implements Profiler
     @Override
     public void run()
     {
-        if (State.CREATED.equals(this.state))
+        /*if (State.CREATED.equals(this.state))
         {
             state = State.RUNNING;
 
-            while (State.RUNNING.equals(state))
+            ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
+            long threadCpuTime = threadMXBean.getThreadCpuTime(info.getThreadId());
+
+            while (State.RUNNING.equals(state) && threadCpuTime != -1)
             {
-                BigDecimal threadCpuPower = cpu.getThreadCpuPower(info.getThreadId());
-
-                if (threadCpuPower != null)
+                if (this.info.getCpuInfo().cycleDuration() > 0)
                 {
-                    BigDecimal methodCpuPower = threadCpuPower.multiply(BigDecimal.valueOf(info.getTimes().getCpuTime())).divide(
-                            BigDecimal.valueOf(cpu.cycleDuration()));
-
-                    info.setCpuPower(methodCpuPower);
+                    try
+                    {
+                        double threadCpuPower = ((threadCpuTime / 1000000.0d) * cpu.power()) / this.info.getCpuInfo().cycleDuration();
+                        info.setCpuPower(BigDecimal.valueOf(threadCpuPower));
+                    }
+                    catch (NumberFormatException e)
+                    {
+                        e.printStackTrace();
+                    }
                 }
+
+                info.getTimes().setCpuTime(threadMXBean.getThreadCpuTime(info.getThreadId()));
+                info.getTimes().setUserTime(threadMXBean.getThreadUserTime(info.getThreadId()));
+
+                threadCpuTime = threadMXBean.getThreadCpuTime(info.getThreadId());
             }
         }
+        state = State.FINISHED;
+
+        dump();*/
+    }
+
+    /**
+     * Print the information about the profiler.
+     */
+    private void dump()
+    {
+        System.err.printf("Method.....: %s\n", this.info.getMethodName());
+        System.err.printf("Timer......: %s\n", this.info.getTimer());
+        System.err.printf("CPU time...: %s\n", this.info.getTimes().getCpuTime());
+        System.err.printf("User time..: %s\n", this.info.getTimes().getUserTime());
+        System.err.printf("Power......: %s\n", this.info.getCpuPower());
+        System.err.println();
     }
 
     @Override

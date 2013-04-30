@@ -20,64 +20,63 @@ import java.io.Serializable;
 public final class Times implements Serializable
 {
     /**
-     * Serial code version <code>serialVersionUID</code>.
+     * Serial code version <code>serialVersionUID</code> for serialization.
      */
-    private static final long serialVersionUID = 6501094740966040960L;
+    private static final long serialVersionUID = -4409293325305655756L;
 
     /**
-     * The user time information in milliseconds.
+     * The thread id.
      */
-    private volatile long userTime;
+    private final long threadId;
 
     /**
-     * The CPU time information in milliseconds.
+     * The CPU time information.
      */
-    private volatile long cpuTime;
+    private Period cpuTime;
+
+    /**
+     * The user time information.
+     */
+    private volatile Period userTime;
 
     /**
      * 
-     * @param userTimeValue
-     *            The userTime in milliseconds. Might not be zero or less than it.
-     * @param cpuTimeValue
-     *            The cpuTime The CPU time in milliseconds. Might not be zero or less than it.
+     * @param tid
+     *            The thread id.
      */
-    public Times(long userTimeValue, long cpuTimeValue)
+    public Times(long tid)
     {
-        this.userTime = userTimeValue;
-        this.cpuTime = cpuTimeValue;
+        this.threadId = tid;
     }
 
     /**
-     * The default constructor.
+     * 
+     * @param id
+     *            The thread id.
+     * @param cpuTimes
+     *            The cpu time.
+     * @param userTimes
+     *            the user time.
      */
-    public Times()
+    public Times(long id, Period cpuTimes, Period userTimes)
     {
+        this(id);
+        this.cpuTime = cpuTimes;
+        this.userTime = userTimes;
     }
 
     /**
-     * @return the userTime
+     * @return the threadId
      */
-    public long getUserTime()
+    public long getThreadId()
     {
-        return userTime;
-    }
-
-    /**
-     * @param newUserTime
-     *            the userTime to set
-     */
-    public void setUserTime(long newUserTime)
-    {
-        synchronized (this)
-        {
-            this.userTime = newUserTime;
-        }
+        return threadId;
     }
 
     /**
      * @return the cpuTime
      */
-    public long getCpuTime()
+    public Period getCpuTime()
     {
         return cpuTime;
     }
@@ -86,11 +85,25 @@ public final class Times implements Serializable
      * @param newCpuTime
      *            the cpuTime to set
      */
-    public void setCpuTime(long newCpuTime)
+    public void setCpuTime(Period newCpuTime)
     {
-        synchronized (this)
-        {
-            this.cpuTime = newCpuTime;
-        }
+        this.cpuTime = newCpuTime;
+    }
+
+    /**
+     * @return the userTime
+     */
+    public Period getUserTime()
+    {
+        return userTime;
+    }
+
+    /**
+     * @param newUserTime
+     *            the userTime to set
+     */
+    public void setUserTime(Period newUserTime)
+    {
+        this.userTime = newUserTime;
     }
 }

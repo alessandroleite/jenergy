@@ -41,6 +41,7 @@ public final class MethodInterceptor implements Interceptor
     @Override
     public Object invoke(Invocation invocation) throws Throwable
     {
+        Object result;
 
         if (!(invocation instanceof MethodInvocation))
         {
@@ -48,14 +49,23 @@ public final class MethodInterceptor implements Interceptor
         }
 
         MethodProfiler profile = Cpu.getInstance().monitor(((MethodInvocation) invocation).getMethod());
+        // CpuInfo cpuInfo = profile.getInfo().getCpuInfo();
 
         try
         {
-            return invocation.invokeNext();
+            // cpuInfo.updateCycleDuration();
+            result = invocation.invokeNext();
         }
         finally
         {
             profile.stop();
+            if ("main".equalsIgnoreCase(((MethodInvocation) invocation).getMethod().getName()))
+            {
+                Cpu.getInstance().getThread(Thread.currentThread().getId()).getTimer().stop();
+                System.out.println("--- main ---");
+            }
         }
+
+        return result;
     }
 }

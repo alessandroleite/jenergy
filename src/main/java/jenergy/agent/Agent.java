@@ -58,10 +58,11 @@ public final class Agent
             @Override
             public void run()
             {
+                System.out.println("Shutdown Hook Thread Id: " + this.getId());
                 System.out.println("[JEnergy Profile stopped!]");
             }
         });
-
+        
         Cpu.getInstance().activate();
         org.jboss.aop.standalone.Agent.premain("-hotSwap", inst);
     }
