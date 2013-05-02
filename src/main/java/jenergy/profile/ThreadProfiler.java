@@ -1,5 +1,5 @@
 /**
- * Copyright 2013 Alessandro
+ * Copyright 2013 Contributors
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -17,25 +17,31 @@ package jenergy.profile;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import jenergy.agent.Cpu;
+import jenergy.profile.data.MethodInfo;
+import jenergy.profile.data.MethodStatistics;
 import jenergy.profile.data.Period;
 import jenergy.profile.data.ThreadInfo;
 import jenergy.profile.data.Times;
+import jenergy.utils.Threads;
 import jenergy.utils.Timer;
 
 public class ThreadProfiler implements Profiler
 {
-    
+
     /**
-     * The method statistics executed in this thread.
+     * The method statistics executed in this thread. The key is the method's name and the values is a {@link List} with the information about the
+     * method execution.
      */
-    private final Map<String, List<MethodProfiler>> threadMethods = new ConcurrentHashMap<String, List<MethodProfiler>>();
-    
+    private final Map<String, List<MethodInfo>> threadMethods = new ConcurrentHashMap<String, List<MethodInfo>>();
+
     /**
      * The Cpu instance of the thread.
      */
@@ -47,17 +53,15 @@ public class ThreadProfiler implements Profiler
     private final ThreadInfo threadInfo;
 
     /**
-     * The state of this thread profiler.
+     * The interval to collect the data.
      */
-    // private volatile State state;
-
     private final long timeSample;
-    
+
     /**
-     * The thread id of this monitor. 
+     * The flag to indicate if the thread must be continue running.
      */
-    private final long monitorThreadId;
-    
+    private volatile boolean execute = Boolean.TRUE;
+
     /**
      * Creates a new {@link ThreadProfiler} instance with the CPU and thread id.
      * 
@@ -72,107 +76,87 @@ public class ThreadProfiler implements Profiler
     {
         this.cpu = threadCpu;
         threadInfo = new ThreadInfo(tid, Timer.start());
-        // this.state = State.CREATED;
         this.timeSample = timeSampling;
-        this.monitorThreadId = Thread.currentThread().getId();
     }
 
     @Override
     public void run()
     {
-        while (!Thread.currentThread().isInterrupted())
+        while (execute)
         {
             update();
-            try
-            {
-                Thread.sleep(timeSample);
-            }
-            catch (InterruptedException exception)
-            {
-                break;
-            }
+            Threads.sleep(timeSample, true);
         }
-        
-        
-        /*
-         * if (State.CREATED.equals(this.state())) { state = State.RUNNING; }
-         * 
-         * final ThreadMXBean mxBean = ManagementFactory.getThreadMXBean();
-         * 
-         * while (State.RUNNING.equals(this.state())) { final long threadCpuTime = mxBean.getThreadCpuTime(threadInfo.getId());
-         * 
-         * if (mxBean != null && threadCpuTime > 0) { if (this.threadInfo.getCpuInfo().cycleDuration() > 0) { threadInfo
-         * .setPower(BigDecimal.valueOf((threadCpuTime / 1000000.0d) * cpu.power() / this.threadInfo.getCpuInfo().cycleDuration()));
-         * threadInfo.getTimes().setCpuTime(threadCpuTime); threadInfo.getTimes().setUserTime(mxBean.getThreadUserTime(threadInfo.getId()));
-         * threadInfo.setManagementInfo(mxBean.getThreadInfo(threadInfo.getId())); } else { System.out.println("cycle duration was zero !!!!"); } } }
-         */
     }
-    
-    
+
     /**
      * Update the hash table of thread times.
      */
     private void update()
     {
         final ThreadMXBean bean = ManagementFactory.getThreadMXBean();
-        final long[] ids = bean.getAllThreadIds();
+
+        if (bean == null)
+        {
+            return;
+        }
+
+        final long id = this.threadInfo.getId();
 
         this.getThreadInfo().getCpuInfo().updateCycleDuration();
-        
-        for (long id : ids)
+
+        final long cpuTime = bean.getThreadCpuTime(id);
+        final long userTime = bean.getThreadUserTime(id);
+
+        if (cpuTime != -1 && userTime != -1)
         {
-            
-            if (id == monitorThreadId)
-            {
-                continue;
-            }
-
-            final long cpuTime = bean.getThreadCpuTime(id);
-            final long userTime = bean.getThreadUserTime(id);
-
-            if (cpuTime == -1 || userTime == -1)
-            {
-                continue;
-            }
-
             ThreadInfo info = cpu.getThread(id);
-            
-            if (info == null)
+
+            if (info != null)
             {
                 // info = cpu.monitor(id).getThreadInfo();
-                continue;
-            }
-            
-            Times times = info.getTimes();
-            
-            if (times == null)
-            {
-                times = new Times(id, new Period(cpuTime, cpuTime), new Period(userTime, userTime));
-                info.setTimes(times);
-            }
-            else
-            {
-                times.getCpuTime().setEndTime(cpuTime);
-                times.getUserTime().setEndTime(userTime);
+
+                Times times = info.getTimes();
+
+                if (times == null)
+                {
+                    times = new Times(id, new Period(cpuTime, cpuTime), new Period(userTime, userTime));
+                    info.setTimes(times);
+                }
+                else
+                {
+                    times.getCpuTime().setEndTime(cpuTime);
+                    times.getUserTime().setEndTime(userTime);
+                }
+                computeThreadPowerConsumption(cpuTime);
             }
         }
     }
 
-    @Override
-    public State state()
+    /**
+     * Computes and returns the power consumption of the thread.
+     * 
+     * @param cpuTime
+     *            The cpu time in nanoseconds.
+     * @return The power consumption of the thread.
+     */
+    public double computeThreadPowerConsumption(long cpuTime)
     {
-        // return state;
-        return null;
+        if (this.getThreadInfo().getCpuInfo().cycleDuration() > 0)
+        {
+            long threadCpuTime = threadInfo.getTimes().getCpuTime().time() == 0 ? cpuTime : threadInfo.getTimes().getCpuTime().time();
+            double threadCpuPower = Timer.nanoToMillis(threadCpuTime) * this.cpu.power() / 
+                    Timer.nanoToMillis(this.getThreadInfo().getCpuInfo().cycleDuration());
+
+            return threadCpuPower;
+        }
+        return 0d;
     }
 
     @Override
     public void stop()
     {
-        // if (!State.FINISHED.equals(state))
-        // {
-        // this.state = State.FINISHED;
-        // this.threadInfo.getTimer().stop();
-        // }
+        this.execute = Boolean.FALSE;
     }
 
     /**
@@ -181,14 +165,14 @@ public class ThreadProfiler implements Profiler
      * @param method
      *            The method execution of this thread to be monitored.
      */
-    public void addMethod(MethodProfiler method)
+    public void addMethod(MethodInfo method)
     {
-        List<MethodProfiler> methodList = this.threadMethods.get(method.getInfo().getMethodName());
+        List<MethodInfo> methodList = this.threadMethods.get(method.getMethodName());
 
         if (methodList == null)
         {
-            methodList = new CopyOnWriteArrayList<MethodProfiler>();
-            this.threadMethods.put(method.getInfo().getMethodName(), methodList);
+            methodList = new CopyOnWriteArrayList<MethodInfo>();
+            this.threadMethods.put(method.getMethodName(), methodList);
         }
         methodList.add(method);
     }
@@ -204,13 +188,77 @@ public class ThreadProfiler implements Profiler
     }
 
     /**
-     * Update the thread profile state.
+     * Update the power consumption of the thread's methods.
      * 
-     * @param newState
-     *            The new state to be set.
+     * @return The statistics of all method of the thread.
      */
-    // protected void setState(State newState)
-    // {
-    // this.state = newState;
-    // }
+    public Map<String, MethodStatistics> computeCpuPowerConsumptionOfThreadMethods()
+    {
+        final Map<String, MethodStatistics> methodStatistics = this.getMethodStatistics();
+        final long allMethDuration = allThreadMethodDuration(methodStatistics);
+        final long threadCpuTime = this.getThreadInfo().getTimes().getCpuTime().time();
+        final double threadCpuPower = this.getThreadInfo().getPower().doubleValue();
+
+        for (MethodStatistics statistics : methodStatistics.values())
+        {
+            final double methodCpuTime = Timer.nanoToMillis((statistics.getTime() * threadCpuTime) / allMethDuration);
+
+            if (methodCpuTime > 0)
+            {
+                double v = (methodCpuTime * this.getThreadInfo().getPower().doubleValue()) / 
+                        Timer.nanoToMillis(this.getThreadInfo().getCpuInfo().cycleDuration());
+                
+                v = (methodCpuTime * threadCpuPower) / Timer.nanoToMillis(statistics.getTime());
+                statistics.setCpuPower(v);
+            }
+        }
+        return methodStatistics;
+    }
+
+    /**
+     * Returns the duration of all methods.
+     * 
+     * @param statistics
+     *            The {@link Map} with the method to compute the execution time.
+     * @return The duration of the execution of all methods.
+     */
+    protected Long allThreadMethodDuration(Map<String, MethodStatistics> statistics)
+    {
+        long duration = 0L;
+
+        for (MethodStatistics value : statistics.values())
+        {
+            duration += value.getTime();
+        }
+        return duration;
+    }
+
+    /***
+     * Returns a read-only {@link Map} which the key is the method's name and the value is its execution time in milliseconds.
+     * 
+     * @return A read-only {@link Map} which the key is the method's name and the value is its execution time in milliseconds.
+     */
+    protected Map<String, MethodStatistics> getMethodStatistics()
+    {
+        Map<String, MethodStatistics> meths = new HashMap<String, MethodStatistics>();
+
+        for (List<MethodInfo> methods : this.threadMethods.values())
+        {
+            for (MethodInfo method : methods)
+            {
+                MethodStatistics statistics = meths.get(method.getMethodName());
+
+                if (statistics == null)
+                {
+                    statistics = new MethodStatistics(method.getMethodName(), method.getThreadId());
+                    meths.put(method.getMethodName(), statistics);
+                }
+
+                statistics.addTime(method.getTimer().time());
+                statistics.addCpuTime(method.getTimes().getCpuTime().time());
+            }
+        }
+
+        return Collections.unmodifiableMap(meths);
+    }
 }

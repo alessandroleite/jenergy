@@ -1,5 +1,5 @@
 /**
- * Copyright 2013 Alessandro
+ * Copyright 2013 Contributors
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package jenergy.utils;
 
 import java.io.Serializable;
+import java.util.concurrent.TimeUnit;
 
 public final class Timer implements Serializable
 {
@@ -27,12 +28,12 @@ public final class Timer implements Serializable
     /**
      * The time when this {@link Timer} start.
      */
-    private volatile long beginTimeInMillis;
+    private volatile long beginTimeInNano;
 
     /**
      * The time when this {@link Timer} stop.
      */
-    private volatile long endTimeInMillis;
+    private volatile long endTimeInNano;
 
     /**
      * A flag to indicate if the timer had already finished.
@@ -44,7 +45,7 @@ public final class Timer implements Serializable
      */
     private Timer()
     {
-        this.beginTimeInMillis = System.currentTimeMillis();
+        this.beginTimeInNano = System.nanoTime();
     }
 
     /**
@@ -65,18 +66,18 @@ public final class Timer implements Serializable
         if (!stoped)
         {
             this.stoped = true;
-            this.endTimeInMillis = System.currentTimeMillis();
+            this.endTimeInNano = System.nanoTime();
         }
     }
 
     /**
-     * Returns the interval between the begin and the end in milliseconds.
+     * Returns the interval between the begin and the end in nanoseconds.
      * 
-     * @return The interval between the begin and the end in milliseconds.
+     * @return The interval between the begin and the end in nanoseconds.
      */
     public long time()
     {
-        return (stoped ? this.endTimeInMillis : System.currentTimeMillis()) - this.beginTimeInMillis;
+        return (stoped ? this.endTimeInNano : System.nanoTime()) - this.beginTimeInNano;
     }
 
     /**
@@ -84,9 +85,19 @@ public final class Timer implements Serializable
      * 
      * @return The interval between the begin and the end in seconds.
      */
-    public double seconds()
+    public long millis()
     {
-        return time() / 1000.0;
+        return TimeUnit.NANOSECONDS.toMillis(time());
+    }
+
+    /**
+     * Returns the interval between the begin and the end in seconds.
+     * 
+     * @return The interval between the begin and the end in seconds.
+     */
+    public long seconds()
+    {
+        return TimeUnit.NANOSECONDS.toSeconds(time());
     }
 
     /**
@@ -94,9 +105,9 @@ public final class Timer implements Serializable
      * 
      * @return The interval between the begin and the end in minutes.
      */
-    public double minutes()
+    public long minutes()
     {
-        return time() / 60000.0;
+        return TimeUnit.NANOSECONDS.toMinutes(time());
     }
 
     /**
@@ -104,9 +115,9 @@ public final class Timer implements Serializable
      * 
      * @return The interval between the begin and the end in minutes.
      */
-    public double hours()
+    public long hours()
     {
-        return time() / 3600000.0;
+        return TimeUnit.NANOSECONDS.toHours(time());
     }
 
     @Override
@@ -114,20 +125,34 @@ public final class Timer implements Serializable
     {
         final long time = time();
 
-        if (time > 1000L)
+        if (time > 1000000L)
         {
-            long timeInSeconds = time / 1000L;
+            long timeInMillis = TimeUnit.NANOSECONDS.toMillis(time);
+            long timeInSeconds = seconds();
             long hours = timeInSeconds / 3600L;
+
             timeInSeconds -= hours * 3600L;
             long minutes = timeInSeconds / 60L;
             timeInSeconds -= minutes * 60L;
             long seconds = timeInSeconds;
 
-            return String.format("%s hour(s) %s minute(s) %s second(s)", hours, minutes, seconds);
+            return String.format("%s hour(s) %s minute(s) %s second(s) %s millis", hours, minutes, seconds, timeInMillis);
         }
         else
         {
-            return String.format("%s  millisecond(s)", time);
+            return String.format("%s  nanosecond(s)", time);
         }
+    }
+
+    /**
+     * Converts the given value expressed in nanoseconds to milliseconds.
+     * 
+     * @param valueInNanoseconds
+     *            The value in nanoseconds to be converted to milliseconds.
+     * @return The given value converted to milliseconds.
+     */
+    public static long nanoToMillis(long valueInNanoseconds)
+    {
+        return TimeUnit.NANOSECONDS.toMillis(valueInNanoseconds);
     }
 }

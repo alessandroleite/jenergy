@@ -1,5 +1,5 @@
 /**
- * Copyright 2013 Alessandro
+ * Copyright 2013 Contributors
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ public final class Threads
     /**
      * Constant that represents one seconds.
      */
-    private static final int ONE_SECOND = 1000;
+    private static final int ONE_SECOND_IN_MILLIS = 1000;
 
     /**
      * Private constructor to avoid instance of this class.
@@ -34,11 +34,22 @@ public final class Threads
     }
 
     /**
-     * Causes the currently executing thread to sleep during one second.
+     * Causes the current thread to sleep during one second.
      */
     public static void sleepOneSecond()
     {
-        sleep(ONE_SECOND);
+        sleep(ONE_SECOND_IN_MILLIS, false);
+    }
+
+    /**
+     * Sleeps the current thread during one second.
+     * 
+     * @param interruptInCaseOfInterruptedException
+     *            Interrupt the current thread if the sleep throws {@link InterruptedException}.
+     */
+    public static void sleepOneSecond(boolean interruptInCaseOfInterruptedException)
+    {
+        sleep(ONE_SECOND_IN_MILLIS, interruptInCaseOfInterruptedException);
     }
 
     /**
@@ -46,8 +57,10 @@ public final class Threads
      * 
      * @param millis
      *            The amount of time to the current executing thread to sleep. Might be greater than zero.
+     * @param interruptInCaseOfInterruptedException
+     *            Interrupt the current thread if the sleep throws {@link InterruptedException}.
      */
-    public static void sleep(long millis)
+    public static void sleep(long millis, boolean interruptInCaseOfInterruptedException)
     {
         try
         {
@@ -55,7 +68,10 @@ public final class Threads
         }
         catch (InterruptedException e)
         {
-            e.printStackTrace();
+            if (interruptInCaseOfInterruptedException)
+            {
+                Thread.currentThread().interrupt();
+            }
         }
     }
 }

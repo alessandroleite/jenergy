@@ -1,5 +1,5 @@
 /**
- * Copyright 2013 Alessandro
+ * Copyright 2013 Contributors
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ public final class Times implements Serializable
     /**
      * Serial code version <code>serialVersionUID</code> for serialization.
      */
-    private static final long serialVersionUID = -4409293325305655756L;
+    private static final long serialVersionUID = 2607899185474926955L;
 
     /**
      * The thread id.

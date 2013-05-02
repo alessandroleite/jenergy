@@ -1,5 +1,5 @@
 /**
- * Copyright 2013 Alessandro
+ * Copyright 2013 Contributors
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -16,13 +16,10 @@
 package jenergy.profile.data;
 
 import java.io.Serializable;
+import java.lang.reflect.Method;
 import java.math.BigDecimal;
 
-import jenergy.agent.Cpu.CpuInfo;
 import jenergy.utils.Timer;
-
-import org.apache.commons.lang.builder.ToStringBuilder;
-import org.apache.commons.lang.builder.ToStringStyle;
 
 public final class MethodInfo implements Serializable
 {
@@ -31,11 +28,6 @@ public final class MethodInfo implements Serializable
      * Serial code version <code>serialVersionUID</code> for serialization.
      */
     private static final long serialVersionUID = 6690005530794954253L;
-
-    /**
-     * Number of times a thread is at a particular class/method/line combination.
-     */
-    private volatile int tickCount;
 
     /**
      * The method timer.
@@ -47,8 +39,6 @@ public final class MethodInfo implements Serializable
      */
     private Times times;
 
-    // private ThreadInfo threadInfo;
-
     /**
      * The method name.
      */
@@ -58,11 +48,6 @@ public final class MethodInfo implements Serializable
      * The thread id.
      */
     private long threadId;
-    
-    /**
-     * The method's Cpu data.
-     */
-    private final CpuInfo cpuInfo;
 
     /**
      * The cpu power consumption.
@@ -79,7 +64,6 @@ public final class MethodInfo implements Serializable
     {
         this.methodName = name;
         this.timer = methodTimer;
-        this.cpuInfo = new CpuInfo();
     }
 
     /**
@@ -98,27 +82,25 @@ public final class MethodInfo implements Serializable
     }
 
     /**
-     * @return the tickCount
+     * 
+     * @param method
+     *            The method that is monitored.
+     * @param methodTimer
+     *            The timer to measure the method execution.
      */
-    public int getTickCount()
+    public MethodInfo(Method method, Timer methodTimer)
     {
-        return tickCount;
+        this(new StringBuilder(method.getDeclaringClass().getName()).append(".").append(method.getName()).append("#")
+                .append(Thread.currentThread().getId()).toString(), methodTimer, Thread.currentThread().getId());
     }
 
-    /**
-     * Increments the tick count.
-     */
-    public void incrementTickCount()
-    {
-        this.tickCount++;
-    }
 
     /**
      * Returns the method's execution duration.
      * 
      * @return the method's execution duration.
      */
-    public double getMethodDuration()
+    public long getMethodDuration()
     {
         return this.timer.time();
     }
@@ -130,9 +112,10 @@ public final class MethodInfo implements Serializable
     {
         return times;
     }
-    
+
     /**
-     * @param newTimesInstance the times to set
+     * @param newTimesInstance
+     *            the times to set
      */
     public void setTimes(Times newTimesInstance)
     {
@@ -179,18 +162,23 @@ public final class MethodInfo implements Serializable
     {
         return threadId;
     }
-    
-    /**
-     * @return the cpuInfo
-     */
-    public CpuInfo getCpuInfo()
-    {
-        return cpuInfo;
-    }
 
     @Override
     public String toString()
     {
-        return ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
+        // return ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE);
+
+        StringBuilder sb = new StringBuilder();
+
+        final String line = "\n";
+
+        sb.append("Method.....:").append(this.getMethodName()).append(line);
+        sb.append("Timer......:").append(this.getTimer()).append(line);
+        // sb.append("CPU time...:").append(this.getTimes().getCpuTime()).append(line);
+        // sb.append("User time..:").append(this.getTimes().getUserTime()).append(line);
+        sb.append("Power......:").append(this.getCpuPower()).append(line);
+
+        return sb.toString();
+
     }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2013 Alessandro
+ * Copyright 2013 Contributors
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import java.math.BigDecimal;
 import jenergy.agent.Cpu.CpuInfo;
 import jenergy.utils.Timer;
 
-public final class ThreadInfo implements Serializable
+public final class ThreadInfo implements Serializable, Cloneable
 {
     /**
      * Serial code version <code>serialVersionUID</code> for serialization.
@@ -37,7 +37,7 @@ public final class ThreadInfo implements Serializable
      * The CPU times of this thread.
      */
     private final CpuInfo cpuInfo;
-    
+
     /**
      * The computation times of the thread.
      */
@@ -85,6 +85,21 @@ public final class ThreadInfo implements Serializable
     }
 
     /**
+     * Creates an instance of the {@link ThreadInfo} cloning the state of a given {@link ThreadInfo}.
+     * 
+     * @param other
+     *            The {@link ThreadInfo} to be cloned. Might not be <code>null</code>.
+     */
+    protected ThreadInfo(ThreadInfo other)
+    {
+        this.id = other.getId();
+        this.cpuInfo = other.getCpuInfo();
+        this.times = other.getTimes();
+        this.timer = other.getTimer();
+        this.power = other.getPower();
+    }
+
+    /**
      * @return the timer
      */
     public Timer getTimer()
@@ -127,7 +142,8 @@ public final class ThreadInfo implements Serializable
     }
 
     /**
-     * @param newTimesInstance the times to set
+     * @param newTimesInstance
+     *            the times to set
      */
     public void setTimes(Times newTimesInstance)
     {
@@ -165,5 +181,18 @@ public final class ThreadInfo implements Serializable
     public CpuInfo getCpuInfo()
     {
         return cpuInfo;
+    }
+
+    @Override
+    public ThreadInfo clone()
+    {
+        try
+        {
+            return (ThreadInfo) super.clone();
+        }
+        catch (CloneNotSupportedException e)
+        {
+            return new ThreadInfo(this);
+        }
     }
 }

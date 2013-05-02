@@ -1,5 +1,5 @@
 /**
- * Copyright 2013 Alessandro
+ * Copyright 2013 Contributors
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -25,12 +25,12 @@ public class Period implements Serializable
     private static final long serialVersionUID = -6527107885572126396L;
 
     /**
-     * The start time of the period in milliseconds.
+     * The start time of the period in nanoseconds.
      */
     private volatile long startTime;
 
     /**
-     * The end time of the period in milliseconds.
+     * The end time of the period in nanoseconds.
      */
     private volatile long endTime;
 
@@ -38,9 +38,9 @@ public class Period implements Serializable
      * Creates a new {@link Period} with the start and end time.
      * 
      * @param start
-     *            The start time in milliseconds.
+     *            The start time in nanoseconds.
      * @param end
-     *            The end time in milliseconds.
+     *            The end time in nanoseconds.
      */
     public Period(long start, long end)
     {
@@ -52,7 +52,7 @@ public class Period implements Serializable
      * Creates a new {@link Period} with the start time.
      * 
      * @param start
-     *            The start time in milliseconds.
+     *            The start time in nanoseconds.
      */
     public Period(long start)
     {
@@ -101,9 +101,9 @@ public class Period implements Serializable
     }
 
     /**
-     * Returns the interval between the start and the end time in milliseconds.
+     * Returns the interval between the start and the end time in nanoseconds.
      * 
-     * @return The interval between the start and the end time in milliseconds.
+     * @return The interval between the start and the end time in nanoseconds.
      */
     public long time()
     {

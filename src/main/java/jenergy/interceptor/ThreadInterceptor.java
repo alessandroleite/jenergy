@@ -1,5 +1,5 @@
 /**
- * Copyright 2013 Alessandro
+ * Copyright 2013 Contributors
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ import org.jboss.aop.joinpoint.Invocation;
 @InterceptorDef(scope = Scope.PER_VM)
 public class ThreadInterceptor implements Interceptor
 {
-
     @Override
     public String getName()
     {

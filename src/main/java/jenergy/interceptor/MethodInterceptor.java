@@ -1,5 +1,5 @@
 /**
- * Copyright 2013 Alessandro
+ * Copyright 2013 Contributors
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -15,8 +15,14 @@
  */
 package jenergy.interceptor;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
+import java.math.BigDecimal;
+
 import jenergy.agent.Cpu;
-import jenergy.profile.MethodProfiler;
+import jenergy.profile.data.MethodInfo;
+import jenergy.profile.data.Period;
+import jenergy.profile.data.Times;
 
 import org.jboss.aop.InterceptorDef;
 import org.jboss.aop.advice.Interceptor;
@@ -42,26 +48,43 @@ public final class MethodInterceptor implements Interceptor
     public Object invoke(Invocation invocation) throws Throwable
     {
         Object result;
+        
+        final long tid = Thread.currentThread().getId();
 
-        if (!(invocation instanceof MethodInvocation))
-        {
-            throw new IllegalStateException();
-        }
+        final ThreadMXBean bean = ManagementFactory.getThreadMXBean();
 
-        MethodProfiler profile = Cpu.getInstance().monitor(((MethodInvocation) invocation).getMethod());
-        // CpuInfo cpuInfo = profile.getInfo().getCpuInfo();
+        MethodInfo profile = Cpu.getInstance().monitor(((MethodInvocation) invocation).getMethod());
+        profile.setTimes(new Times(tid));
 
         try
         {
-            // cpuInfo.updateCycleDuration();
+            if (bean != null)
+            {
+                profile.getTimes().setCpuTime(new Period(bean.getCurrentThreadCpuTime()));
+                profile.getTimes().setUserTime(new Period(bean.getCurrentThreadUserTime()));
+            }
+
             result = invocation.invokeNext();
         }
         finally
         {
-            profile.stop();
+            profile.getTimer().stop();
+
+            if (bean != null)
+            {
+                profile.getTimes().getCpuTime().setEndTime(bean.getCurrentThreadCpuTime());
+                profile.getTimes().getUserTime().setEndTime(bean.getCurrentThreadUserTime());
+            }
+
             if ("main".equalsIgnoreCase(((MethodInvocation) invocation).getMethod().getName()))
             {
-                Cpu.getInstance().getThread(Thread.currentThread().getId()).getTimer().stop();
+                Cpu.getInstance().getThreadProfiler(tid).stop();
+                Cpu.getInstance().getThread(tid).getTimer().stop();
+                
+                double power = Cpu.getInstance().getThreadProfiler(tid).computeThreadPowerConsumption(profile.getTimes().getUserTime().time());
+                Cpu.getInstance().getThreadProfiler(tid).getThreadInfo().setPower(BigDecimal.valueOf(power));
+                Cpu.getInstance().getThreadProfiler(tid).computeCpuPowerConsumptionOfThreadMethods();
+
                 System.out.println("--- main ---");
             }
         }

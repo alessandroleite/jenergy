@@ -1,5 +1,5 @@
 /**
- * Copyright 2013 Alessandro
+ * Copyright 2013 Contributors
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -18,12 +18,12 @@ package jenergy.agent;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.Collection;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
-import jenergy.profile.MethodProfiler;
 import jenergy.profile.ThreadProfiler;
+import jenergy.profile.data.MethodInfo;
 import jenergy.profile.data.ThreadInfo;
+import jenergy.utils.ThreadProfilers;
+import jenergy.utils.Timer;
 
 public final class Cpu
 {
@@ -40,7 +40,7 @@ public final class Cpu
     /**
      * The thread executed by the CPU.
      */
-    private final Map<Long, ThreadProfiler> threads = new ConcurrentHashMap<Long, ThreadProfiler>();
+    private final ThreadProfilers threads = new ThreadProfilers();
 
     /**
      * Private constructor to avoid more than one instance of this class.
@@ -49,7 +49,7 @@ public final class Cpu
     {
     }
 
-    public static final class CpuInfo
+    public static final class CpuInfo implements Cloneable
     {
         /**
          * The CPU cycle duration.
@@ -62,12 +62,32 @@ public final class Cpu
         private volatile long computationTime;
 
         /**
+         * Default constructor.
+         */
+        public CpuInfo()
+        {
+            this.computationTime = System.nanoTime();
+        }
+
+        /**
+         * Creates an instance of the {@link CpuInfo} with the same state of the given instance.
+         * 
+         * @param other
+         *            The instance of be cloned.
+         */
+        protected CpuInfo(CpuInfo other)
+        {
+            this.cycleDuration = other.cycleDuration;
+            this.computationTime = other.computationTime;
+        }
+
+        /**
          * Update the information about the CPU cycle duration.
          */
         public void updateCycleDuration()
         {
-            this.cycleDuration = System.currentTimeMillis() - computationTime;
-            this.computationTime = System.currentTimeMillis();
+            this.cycleDuration = System.nanoTime() - computationTime;
+            this.computationTime = System.nanoTime();
         }
 
         /**
@@ -89,6 +109,19 @@ public final class Cpu
         {
             return this.cycleDuration;
         }
+
+        @Override
+        public CpuInfo clone()
+        {
+            try
+            {
+                return (CpuInfo) super.clone();
+            }
+            catch (CloneNotSupportedException e)
+            {
+                return new CpuInfo(this);
+            }
+        }
     }
 
     /**
@@ -107,18 +140,15 @@ public final class Cpu
      *            The method to be profiled. Might not be <code>null</code>.
      * @return The instance of the method profiler.
      */
-    public MethodProfiler monitor(Method method)
+    public MethodInfo monitor(Method method)
     {
-        MethodProfiler profiler = new MethodProfiler(method, this);
-        ThreadProfiler threadProfiler = this.threads.get(profiler.getInfo().getThreadId());
+        MethodInfo profiler = new MethodInfo(method, Timer.start());
+        ThreadProfiler threadProfiler = this.threads.get(profiler.getThreadId());
 
         if (threadProfiler == null)
         {
-            threadProfiler = new ThreadProfiler(this, profiler.getInfo().getThreadId(), DEFAULT_TIME_SAMPLING);
-            this.threads.put(threadProfiler.getThreadInfo().getId(), threadProfiler);            
-            new Thread(threadProfiler, "Thread times monitor").start();
+            threadProfiler = this.monitor(profiler.getThreadId());
         }
-        
 
         threadProfiler.addMethod(profiler);
         return profiler;
@@ -145,8 +175,8 @@ public final class Cpu
     {
         ThreadProfiler profiler = new ThreadProfiler(this, threadId, DEFAULT_TIME_SAMPLING);
         this.threads.put(threadId, profiler);
+        new Thread(profiler, "Thread times monitor-" + threadId).start();
 
-        // new Thread(profiler).start();
         return profiler;
     }
 
@@ -250,7 +280,7 @@ public final class Cpu
      */
     public void activate()
     {
-        //long interval = Long.parseLong(System.getProperty("jenergy.collect.interval", "10"));
-        //new ThreadTimesMonitor(interval, this).start();
+        // long interval = Long.parseLong(System.getProperty("jenergy.collect.interval", "10"));
+        // new ThreadTimesMonitor(interval, this).start();
     }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2013 Alessandro
+ * Copyright 2013 Contributors
  *
  *    Licensed under the Apache License, Version 2.0 (the "License");
  *    you may not use this file except in compliance with the License.
@@ -38,12 +38,12 @@ public interface Profiler extends Runnable
         FINISHED;
     }
 
-    /**
-     * Returns the {@link Profiler} state.
-     * 
-     * @return The {@link Profiler} state. It's a read only information because it's not possible to change the state directly.
-     */
-    State state();
+//    /**
+//     * Returns the {@link Profiler} state.
+//     * 
+//     * @return The {@link Profiler} state. It's a read only information because it's not possible to change the state directly.
+//     */
+//    State state();
 
     /**
      * Stops this profile.
