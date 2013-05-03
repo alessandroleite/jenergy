@@ -19,6 +19,12 @@
 		<deploy-repo.url>file:///${env.DEFAULT_MAVEN_REPO_URL}</deploy-repo.url>
 		<compile.source>1.6</compile.source>
 
+		<ajdt.version>1.7.2</ajdt.version>
+		<aspectjrt.version>1.7.1</aspectjrt.version>
+		<aspectjweaver.version>1.7.1</aspectjweaver.version>
+		<aspectjtools.version>1.7.1</aspectjtools.version>
+		<aspectj-maven-plugin.version>1.4</aspectj-maven-plugin.version>
+
 		<jboss.aop.plugin.version>2.1.3.GA</jboss.aop.plugin.version>
 		<license-header-file>${basedir}/LICENSE.txt</license-header-file>
 		<jboss-aop.version>2.2.0.Final</jboss-aop.version>
@@ -94,6 +100,18 @@
 			<artifactId>commons-lang</artifactId>
 			<version>${commons-lang.version}</version>
 		</dependency>
+		
+		<dependency>
+			<groupId>org.aspectj</groupId>
+			<artifactId>aspectjrt</artifactId>
+			<version>${aspectjrt.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.aspectj</groupId>
+			<artifactId>aspectjweaver</artifactId>
+			<version>${aspectjweaver.version}</version>
+		</dependency>
 
 	</dependencies>
 	<build>
@@ -118,6 +136,42 @@
 						</goals>
 					</execution>
 				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>aspectj-maven-plugin</artifactId>
+				<version>${aspectj-maven-plugin.version}</version>
+				<inherited>true</inherited>
+				<dependencies>
+					<dependency>
+						<groupId>org.aspectj</groupId>
+						<artifactId>aspectjrt</artifactId>
+						<version>${aspectjrt.version}</version>
+					</dependency>
+					<dependency>
+						<groupId>org.aspectj</groupId>
+						<artifactId>aspectjtools</artifactId>
+						<version>${aspectjtools.version}</version>
+					</dependency>
+				</dependencies>
+				<executions>
+					<execution>
+						<phase>compile</phase>
+						<goals>
+							<goal>compile</goal>
+							<goal>test-compile</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<complianceLevel>${compile.source}</complianceLevel>
+					<encoding>${project.build.sourceEncoding}</encoding>
+					<outxml>true</outxml>
+					<source>${compile.source}</source>
+					<target>${compile.source}</target>
+					<compilerArgument>-Xlint:all</compilerArgument>
+					<!--<ajdtBuildDefFile>build-1-7.aj.properties</ajdtBuildDefFile> -->
+				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>com.mycila.maven-license-plugin</groupId>
@@ -160,8 +214,9 @@
 							</addDefaultImplementationEntries>
 						</manifest>
 						<manifestEntries>
-							<Premain-Class>jenergy.agent.Agent</Premain-Class>
+							<Premain-Class>jenergy.agent.aop.aspectj.Agent</Premain-Class>
 							<Can-Redefine-Classes>true</Can-Redefine-Classes>
+							<Can-Retransform-Classes>true</Can-Retransform-Classes>
 						</manifestEntries>
 					</archive>
 				</configuration>
@@ -191,6 +246,7 @@
 				<inherited>true</inherited>
 				<configuration>
 					<additionalProjectnatures>
+						<projectnature>org.eclipse.ajdt.ui.ajnature</projectnature>
 						<projectnature>org.maven.ide.eclipse.maven2Nature</projectnature>
 						<projectnature>org.eclipse.jem.workbench.JavaEMFNature</projectnature>
 						<projectnature>org.eclipse.wst.jsdt.core.jsNature </projectnature>
@@ -223,6 +279,7 @@
 					<downloadJavadocs>true</downloadJavadocs>
 					<encoding>${project.build.sourceEncoding}</encoding>
 					<projectNameTemplate>[groupId]-[artifactId]-[version]</projectNameTemplate>
+					<ajdtVersion>${ajdt.version}</ajdtVersion>
 				</configuration>
 			</plugin>
 			<plugin>

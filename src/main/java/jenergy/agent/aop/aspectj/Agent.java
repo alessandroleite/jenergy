@@ -12,16 +12,19 @@
  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
+ *
+ *    Contributors:
+ *          Alessandro Ferreira Leite - the initial implementation.
  */
-package jenergy.agent;
+package jenergy.agent.aop.aspectj;
 
 import java.lang.instrument.Instrumentation;
 
-import jenergy.utils.ClassUtils;
+import jenergy.agent.Cpu;
+import jenergy.utils.ProfileConfig;
 
 public final class Agent
 {
-
     /**
      * Private constructor to avoid instance of this class.
      */
@@ -40,30 +43,8 @@ public final class Agent
      */
     public static void premain(String agentArgs, Instrumentation inst)
     {
-        Thread.currentThread().setName("JEnergy Profile");
-        System.out.println("+-----------------------------------------------------+");
-        System.out.println("|                JEnergy Profile 0.0.1                |");
-        System.out.println("+-----------------------------------------------------+");
-
-        System.setProperty("jboss.aop.class.path", ClassUtils.getClassLocation(Agent.class));
-
-        if (agentArgs != null && (agentArgs.indexOf(".jar") != -1 || (agentArgs.indexOf("/") != -1)))
-        {
-            System.setProperty("app.class.path", agentArgs);
-            System.setProperty("jboss.aop.path", agentArgs);
-        }
-
-        Runtime.getRuntime().addShutdownHook(new Thread()
-        {
-            @Override
-            public void run()
-            {
-                System.out.println("Shutdown Hook Thread Id: " + this.getId());
-                System.out.println("[JEnergy Profile stopped!]");
-            }
-        });
-        
+        ProfileConfig.start();
         Cpu.getInstance().activate();
-        org.jboss.aop.standalone.Agent.premain("-hotSwap", inst);
+        org.aspectj.weaver.loadtime.Agent.premain(agentArgs, inst);
     }
 }

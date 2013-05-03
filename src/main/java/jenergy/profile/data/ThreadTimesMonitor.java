@@ -12,6 +12,9 @@
  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
+ *
+ *    Contributors:
+ *          Alessandro Ferreira Leite - the initial implementation.
  */
 package jenergy.profile.data;
 
@@ -103,7 +106,7 @@ public final class ThreadTimesMonitor extends Thread
             if (times == null)
             {
                 times = new Times(id, new Period(cpuTime, cpuTime), new Period(userTime, userTime));
-                info.setTimes(times);
+                //info.setTimes(times);
             }
             else
             {

@@ -12,6 +12,9 @@
  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
+ *
+ *    Contributors:
+ *          Alessandro Ferreira Leite - the initial implementation.
  */
 package jenergy.profile;
 
@@ -29,7 +32,6 @@ import jenergy.profile.data.MethodInfo;
 import jenergy.profile.data.MethodStatistics;
 import jenergy.profile.data.Period;
 import jenergy.profile.data.ThreadInfo;
-import jenergy.profile.data.Times;
 import jenergy.utils.Threads;
 import jenergy.utils.Timer;
 
@@ -60,7 +62,7 @@ public class ThreadProfiler implements Profiler
     /**
      * The flag to indicate if the thread must be continue running.
      */
-    private volatile boolean execute = Boolean.TRUE;
+    private volatile boolean active = Boolean.TRUE;
 
     /**
      * Creates a new {@link ThreadProfiler} instance with the CPU and thread id.
@@ -82,7 +84,7 @@ public class ThreadProfiler implements Profiler
     @Override
     public void run()
     {
-        while (execute)
+        while (active)
         {
             update();
             Threads.sleep(timeSample, true);
@@ -110,26 +112,17 @@ public class ThreadProfiler implements Profiler
 
         if (cpuTime != -1 && userTime != -1)
         {
-            ThreadInfo info = cpu.getThread(id);
-
-            if (info != null)
+            if (getThreadInfo().getTimes().getCpuTime() == null)
             {
-                // info = cpu.monitor(id).getThreadInfo();
-
-                Times times = info.getTimes();
-
-                if (times == null)
-                {
-                    times = new Times(id, new Period(cpuTime, cpuTime), new Period(userTime, userTime));
-                    info.setTimes(times);
-                }
-                else
-                {
-                    times.getCpuTime().setEndTime(cpuTime);
-                    times.getUserTime().setEndTime(userTime);
-                }
-                computeThreadPowerConsumption(cpuTime);
+                getThreadInfo().getTimes().setCpuTime(new Period(cpuTime, cpuTime));
+                getThreadInfo().getTimes().setUserTime(new Period(userTime, userTime));
             }
+            else
+            {
+                getThreadInfo().getTimes().getCpuTime().setEndTime(cpuTime);
+                getThreadInfo().getTimes().getUserTime().setEndTime(userTime);
+            }
+            // computeThreadPowerConsumption(cpuTime);
         }
     }
 
@@ -156,7 +149,7 @@ public class ThreadProfiler implements Profiler
     @Override
     public void stop()
     {
-        this.execute = Boolean.FALSE;
+        this.active = Boolean.FALSE;
     }
 
     /**
@@ -188,6 +181,15 @@ public class ThreadProfiler implements Profiler
     }
 
     /**
+     * Returns <code>true</code> if the {@link ThreadProfiler} is still active or <code>false</code> otherwise.
+     * @return <code>true</code> if the {@link ThreadProfiler} is still active or <code>false</code> otherwise.
+     */
+    public boolean isActive()
+    {
+        return active;
+    }
+
+    /**
      * Update the power consumption of the thread's methods.
      * 
      * @return The statistics of all method of the thread.
@@ -207,7 +209,7 @@ public class ThreadProfiler implements Profiler
             {
                 double v = (methodCpuTime * this.getThreadInfo().getPower().doubleValue()) / 
                         Timer.nanoToMillis(this.getThreadInfo().getCpuInfo().cycleDuration());
-                
+
                 v = (methodCpuTime * threadCpuPower) / Timer.nanoToMillis(statistics.getTime());
                 statistics.setCpuPower(v);
             }

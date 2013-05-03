@@ -12,8 +12,13 @@
  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
+ *
+ *    Contributors:
+ *          Alessandro Ferreira Leite - the initial implementation.
  */
 package jenergy.profile.data;
+
+import java.text.DecimalFormat;
 
 import jenergy.utils.Timer;
 
@@ -223,10 +228,12 @@ public class MethodStatistics implements Comparable<MethodStatistics>
     @Override
     public String toString()
     {
+        DecimalFormat format = new DecimalFormat("#,##0.00");
         StringBuilder sb = new StringBuilder(String.format("%s time: %dms cpu: %dms", getName(), Timer.nanoToMillis(time),
                 Timer.nanoToMillis(cpuTime)));
         sb.append(String.format(" (min: %dms, max: %dms) - %d invocations", Timer.nanoToMillis(min), Timer.nanoToMillis(max), numberOfInvocations));
-
+        sb.append(String.format(" %s", format.format(this.getCpuPower())));
+        
         return sb.toString();
     }
 }

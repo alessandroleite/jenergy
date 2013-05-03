@@ -12,6 +12,9 @@
  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
+ *
+ *    Contributors:
+ *          Alessandro Ferreira Leite - the initial implementation.
  */
 package jenergy.agent;
 
@@ -33,9 +36,10 @@ public final class Cpu
     private static final Cpu INSTANCE = new Cpu();
 
     /**
-     * The time sampling defined by the system's variable (-D) <em>jenergy.time.sampling</em> in milliseconds. The default is 10 milliseconds.
+     * The time sampling defined by the system's variable (-D) <em>jenergy.time.sampling</em> in milliseconds. The default is 1000 milliseconds (1
+     * second).
      */
-    private static final Long DEFAULT_TIME_SAMPLING = Long.parseLong(System.getProperty("jenergy.time.sampling", "10"));
+    private static final Long DEFAULT_TIME_SAMPLING = Long.parseLong(System.getProperty("jenergy.time.sampling", "1000"));
 
     /**
      * The thread executed by the CPU.
@@ -142,23 +146,29 @@ public final class Cpu
      */
     public MethodInfo monitor(Method method)
     {
-        MethodInfo profiler = new MethodInfo(method, Timer.start());
-        ThreadProfiler threadProfiler = this.threads.get(profiler.getThreadId());
-
-        if (threadProfiler == null)
+        synchronized (this.threads)
         {
-            threadProfiler = this.monitor(profiler.getThreadId());
-        }
+            MethodInfo profiler = new MethodInfo(method, Timer.start());
+            ThreadProfiler threadProfiler = this.threads.get(profiler.getThreadId());
 
-        threadProfiler.addMethod(profiler);
-        return profiler;
+            if (threadProfiler == null)
+            {
+                threadProfiler = this.monitor(profiler.getThreadId());
+            }
+
+            threadProfiler.addMethod(profiler);
+            return profiler;
+
+        }
     }
 
     /**
+     * Creates and returns the {@link ThreadProfiler} for the given {@link Thread}.
      * 
      * @param thread
      *            The thread to be monitored. Might not be <code>null</code>.
-     * @return The instance of the {@link ThreadProfiler}.
+     * @return The instance of the {@link ThreadProfiler} of the given {@link Thread}.
+     * @see #monitor(long)
      */
     public ThreadProfiler monitor(Thread thread)
     {
@@ -166,18 +176,27 @@ public final class Cpu
     }
 
     /**
+     * Creates and returns the {@link ThreadProfiler} for the given {@link Thread}.
      * 
      * @param threadId
-     *            The thread to be monitored. Might not be <code>zero</code>.
-     * @return The instance of the {@link ThreadProfiler}.
+     *            The thread id to be monitored. Might not be <code>zero</code>.
+     * @return The instance of the {@link ThreadProfiler} of the given {@link Thread}.
      */
     public ThreadProfiler monitor(long threadId)
     {
-        ThreadProfiler profiler = new ThreadProfiler(this, threadId, DEFAULT_TIME_SAMPLING);
-        this.threads.put(threadId, profiler);
-        new Thread(profiler, "Thread times monitor-" + threadId).start();
+        synchronized (this.threads)
+        {
+            ThreadProfiler profiler = this.threads.get(threadId);
 
-        return profiler;
+            if (profiler == null)
+            {
+                profiler = new ThreadProfiler(this, threadId, DEFAULT_TIME_SAMPLING);
+                this.threads.put(threadId, profiler);
+
+                new Thread(profiler, "Thread times monitor-" + threadId).start();
+            }
+            return profiler;
+        }
     }
 
     /**

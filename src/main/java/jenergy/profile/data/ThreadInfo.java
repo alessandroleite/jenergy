@@ -12,6 +12,9 @@
  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
+ *
+ *    Contributors:
+ *          Alessandro Ferreira Leite - the initial implementation.
  */
 package jenergy.profile.data;
 
@@ -41,7 +44,7 @@ public final class ThreadInfo implements Serializable, Cloneable
     /**
      * The computation times of the thread.
      */
-    private Times times;
+    private final Times times;
 
     /**
      * The timer with the time spend by the thread.
@@ -68,6 +71,7 @@ public final class ThreadInfo implements Serializable, Cloneable
     {
         this.id = tid;
         this.cpuInfo = new CpuInfo();
+        this.times = new Times(tid);
     }
 
     /**
@@ -139,15 +143,6 @@ public final class ThreadInfo implements Serializable, Cloneable
     public long getId()
     {
         return id;
-    }
-
-    /**
-     * @param newTimesInstance
-     *            the times to set
-     */
-    public void setTimes(Times newTimesInstance)
-    {
-        this.times = newTimesInstance;
     }
 
     /**

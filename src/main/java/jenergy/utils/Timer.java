@@ -12,6 +12,9 @@
  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
+ *
+ *    Contributors:
+ *          Alessandro Ferreira Leite - the initial implementation.
  */
 package jenergy.utils;
 
@@ -68,6 +71,16 @@ public final class Timer implements Serializable
             this.stoped = true;
             this.endTimeInNano = System.nanoTime();
         }
+    }
+
+    /**
+     * Restart this {@link Timer}.
+     */
+    public void restart()
+    {
+        this.stoped = false;
+        this.endTimeInNano = 0;
+        this.beginTimeInNano = System.nanoTime();
     }
 
     /**

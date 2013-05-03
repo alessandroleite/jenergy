@@ -16,34 +16,27 @@
  *    Contributors:
  *          Alessandro Ferreira Leite - the initial implementation.
  */
-package jenergy.profile;
+package jenergy.utils;
 
-public interface Profiler extends Runnable
+public enum OutputStrategy
 {
     /**
-     * Enum with the valid states of a profiler thread.
+     * The data are only added to the console.
      */
-    public static enum State
-    {
-        /**
-         * This state indicates that the profiler was just created but not started yet.
-         */
-        CREATED,
-
-        /**
-         * This states means that the profiler is active collecting execution data about some method.
-         */
-        RUNNING,
-
-        /**
-         * This states means that the profiler finished and it can't start again.
-         */
-        FINISHED;
-    }
+    CONSOLE,
 
     /**
-     * Stops this profile.
+     * The data are only saved to file.
      */
-    void stop();
+    FILE,
 
+    /**
+     * The data are added both to the console and to file.
+     */
+    FILE_AND_CONSOLE,
+
+    /**
+     * No output is produced.
+     */
+    NONE;
 }

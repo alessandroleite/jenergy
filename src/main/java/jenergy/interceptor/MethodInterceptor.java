@@ -12,17 +12,13 @@
  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
+ *
+ *    Contributors:
+ *          Alessandro Ferreira Leite - the initial implementation.
  */
 package jenergy.interceptor;
 
-import java.lang.management.ManagementFactory;
-import java.lang.management.ThreadMXBean;
-import java.math.BigDecimal;
-
-import jenergy.agent.Cpu;
-import jenergy.profile.data.MethodInfo;
-import jenergy.profile.data.Period;
-import jenergy.profile.data.Times;
+import jenergy.agent.aop.MethodExecutionInterceptor;
 
 import org.jboss.aop.InterceptorDef;
 import org.jboss.aop.advice.Interceptor;
@@ -30,13 +26,11 @@ import org.jboss.aop.advice.Scope;
 import org.jboss.aop.joinpoint.Invocation;
 import org.jboss.aop.joinpoint.MethodInvocation;
 
-// FIXME The pointcut can be defined by the user at runtime?
-
 @org.jboss.aop.Bind(pointcut = "execution(* *->*(..)) AND !execution(* jenergy.*->*(..)) AND !execution(* sun.*->*(..)) " +
          "AND !execution(* java.*->*(..)) AND !execution(* org.jboss.*->*(..)) AND !execution(* javassist.*->*(..)) " +
          "AND !execution(* org.apache.*->*(..))")
 @InterceptorDef(scope = Scope.PER_VM)
-public final class MethodInterceptor implements Interceptor
+public final class MethodInterceptor extends MethodExecutionInterceptor implements Interceptor
 {
     @Override
     public String getName()
@@ -47,48 +41,12 @@ public final class MethodInterceptor implements Interceptor
     @Override
     public Object invoke(Invocation invocation) throws Throwable
     {
-        Object result;
-        
-        final long tid = Thread.currentThread().getId();
+        return this.invoke(((MethodInvocation) invocation).getMethod(), invocation);
+    }
 
-        final ThreadMXBean bean = ManagementFactory.getThreadMXBean();
-
-        MethodInfo profile = Cpu.getInstance().monitor(((MethodInvocation) invocation).getMethod());
-        profile.setTimes(new Times(tid));
-
-        try
-        {
-            if (bean != null)
-            {
-                profile.getTimes().setCpuTime(new Period(bean.getCurrentThreadCpuTime()));
-                profile.getTimes().setUserTime(new Period(bean.getCurrentThreadUserTime()));
-            }
-
-            result = invocation.invokeNext();
-        }
-        finally
-        {
-            profile.getTimer().stop();
-
-            if (bean != null)
-            {
-                profile.getTimes().getCpuTime().setEndTime(bean.getCurrentThreadCpuTime());
-                profile.getTimes().getUserTime().setEndTime(bean.getCurrentThreadUserTime());
-            }
-
-            if ("main".equalsIgnoreCase(((MethodInvocation) invocation).getMethod().getName()))
-            {
-                Cpu.getInstance().getThreadProfiler(tid).stop();
-                Cpu.getInstance().getThread(tid).getTimer().stop();
-                
-                double power = Cpu.getInstance().getThreadProfiler(tid).computeThreadPowerConsumption(profile.getTimes().getUserTime().time());
-                Cpu.getInstance().getThreadProfiler(tid).getThreadInfo().setPower(BigDecimal.valueOf(power));
-                Cpu.getInstance().getThreadProfiler(tid).computeCpuPowerConsumptionOfThreadMethods();
-
-                System.out.println("--- main ---");
-            }
-        }
-
-        return result;
+    @Override
+    protected Object proceed(Object invoker) throws Throwable
+    {
+        return ((MethodInvocation) invoker).invokeNext();
     }
 }

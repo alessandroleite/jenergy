@@ -12,11 +12,16 @@
  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
+ *
+ *    Contributors:
+ *          Alessandro Ferreira Leite - the initial implementation.
  */
 package jenergy.utils;
 
 import java.io.File;
 import java.net.URL;
+
+import org.apache.log4j.Logger;
 
 public final class ClassUtils
 {
@@ -30,7 +35,7 @@ public final class ClassUtils
     }
 
     /**
-     * Returns the location of a given class.
+     * Returns the location of the given class.
      * 
      * @param clazz
      *            The class to get its location.
@@ -79,5 +84,33 @@ public final class ClassUtils
             s = "?";
         }
         return s;
+    }
+
+    /**
+     * Return the default ClassLoader to use: typically the thread context ClassLoader, if available; the ClassLoader that loaded the ClassUtils class
+     * will be used as fallback.
+     * 
+     * @return the default ClassLoader (never <code>null</code>)
+     * @see java.lang.Thread#getContextClassLoader()
+     */
+    public static ClassLoader getDefaultClassLoader()
+    {
+        ClassLoader cl = null;
+        try
+        {
+            cl = Thread.currentThread().getContextClassLoader();
+        }
+        catch (Throwable ex)
+        {
+            if (Logger.getLogger(ClassUtils.class).isDebugEnabled())
+            {
+                Logger.getLogger(ClassUtils.class).debug(ex.getMessage(), ex);
+            }
+        }
+        if (cl == null)
+        {
+            cl = ClassUtils.class.getClassLoader();
+        }
+        return cl;
     }
 }

@@ -12,6 +12,9 @@
  *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *    See the License for the specific language governing permissions and
  *    limitations under the License.
+ *
+ *    Contributors:
+ *          Alessandro Ferreira Leite - the initial implementation.
  */
 package jenergy.utils;
 
@@ -25,7 +28,6 @@ import jenergy.profile.ThreadProfiler;
 
 public class ThreadProfilers implements Iterable<ThreadProfiler>
 {
-
     /**
      * The {@link Map} delegate with the thread profilers.
      */
@@ -92,4 +94,20 @@ public class ThreadProfilers implements Iterable<ThreadProfiler>
         return values().iterator();
     }
 
+    /**
+     * Returns <code>true</code> if there is {@link ThreadProfiler} active, otherwise returns <code>false</code>.
+     * 
+     * @return <code>true</code> if there is {@link ThreadProfiler} active, otherwise returns <code>false</code>.
+     */
+    public boolean isActive()
+    {
+        for (ThreadProfiler thread : this.delegate.values())
+        {
+            if (thread.isActive())
+            {
+                return true;
+            }
+        }
+        return false;
+    }
 }
