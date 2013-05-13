@@ -22,16 +22,15 @@ import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 
-import jenergy.utils.Timer;
+import jenergy.utils.time.Timer;
 
 public final class MethodInfo implements Serializable
 {
-
     /**
      * Serial code version <code>serialVersionUID</code> for serialization.
      */
-    private static final long serialVersionUID = 6690005530794954253L;
-
+    private static final long serialVersionUID = -8180872209687559622L;
+    
     /**
      * The method timer.
      */
@@ -58,6 +57,11 @@ public final class MethodInfo implements Serializable
     private BigDecimal cpuPower;
 
     /**
+     * The data about the caller.
+     */
+    private final StackTraceElement calleeMethod;
+
+    /**
      * @param name
      *            The name of the method to be analyzed.
      * @param methodTimer
@@ -67,6 +71,16 @@ public final class MethodInfo implements Serializable
     {
         this.methodName = name;
         this.timer = methodTimer;
+
+        StackTraceElement[] stackFrames = Thread.currentThread().getStackTrace();
+        if (stackFrames != null && stackFrames.length > 0)
+        {
+            calleeMethod = stackFrames[stackFrames.length - 1];
+        }
+        else
+        {
+            calleeMethod = null;
+        }
     }
 
     /**
@@ -93,10 +107,8 @@ public final class MethodInfo implements Serializable
      */
     public MethodInfo(Method method, Timer methodTimer)
     {
-        this(new StringBuilder(method.getDeclaringClass().getName()).append(".").append(method.getName()).append("#")
-                .append(Thread.currentThread().getId()).toString(), methodTimer, Thread.currentThread().getId());
+        this(formatMethodName(method.getDeclaringClass(), method.getName()), methodTimer, Thread.currentThread().getId());
     }
-
 
     /**
      * Returns the method's execution duration.
@@ -166,6 +178,14 @@ public final class MethodInfo implements Serializable
         return threadId;
     }
 
+    /**
+     * @return the calleeMethod
+     */
+    public StackTraceElement getCalleeMethod()
+    {
+        return calleeMethod;
+    }
+
     @Override
     public String toString()
     {
@@ -182,6 +202,33 @@ public final class MethodInfo implements Serializable
         sb.append("Power......:").append(this.getCpuPower()).append(line);
 
         return sb.toString();
+    }
 
+    /**
+     * Format and returns the name of the method. The format is: <class name>.<method name>#<thread id>.
+     * 
+     * @param methodClass
+     *            The class where the method was declared.
+     * @param methodName
+     *            The method name.
+     * @return The name of the method. The format is: <class name>.<method name>#<thread id>.
+     */
+    public static String formatMethodName(Class<?> methodClass, String methodName)
+    {
+        return new StringBuilder(methodClass.getName()).append(".").append(methodName).append("#").append(Thread.currentThread().getId()).toString();
+    }
+    
+    /**
+     * Format and returns the name of the method. The format is: <class name>.<method name>#<thread id>.
+     * 
+     * @param className
+     *            The name of the {@link Class} where the method was declared.
+     * @param methodName
+     *            The method name.
+     * @return The name of the method. The format is: <class name>.<method name>#<thread id>.
+     */
+    public static String formatMethodName(String className, String methodName)
+    {
+        return new StringBuilder(className).append(".").append(methodName).append("#").append(Thread.currentThread().getId()).toString();
     }
 }

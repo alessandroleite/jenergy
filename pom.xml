@@ -214,7 +214,8 @@
 							</addDefaultImplementationEntries>
 						</manifest>
 						<manifestEntries>
-							<Premain-Class>jenergy.agent.aop.aspectj.Agent</Premain-Class>
+							<!-- <Premain-Class>jenergy.agent.aop.aspectj.Agent</Premain-Class> -->
+							<Premain-Class>jenergy.agent.aop.jboss.Agent</Premain-Class>
 							<Can-Redefine-Classes>true</Can-Redefine-Classes>
 							<Can-Retransform-Classes>true</Can-Retransform-Classes>
 						</manifestEntries>

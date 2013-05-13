@@ -26,7 +26,7 @@ import jenergy.profile.ThreadProfiler;
 import jenergy.profile.data.MethodInfo;
 import jenergy.profile.data.ThreadInfo;
 import jenergy.utils.ThreadProfilers;
-import jenergy.utils.Timer;
+import jenergy.utils.time.Timer;
 
 public final class Cpu
 {
@@ -148,7 +148,7 @@ public final class Cpu
     {
         synchronized (this.threads)
         {
-            MethodInfo profiler = new MethodInfo(method, Timer.start());
+            MethodInfo profiler = new MethodInfo(method, Timer.createAndStart());
             ThreadProfiler threadProfiler = this.threads.get(profiler.getThreadId());
 
             if (threadProfiler == null)

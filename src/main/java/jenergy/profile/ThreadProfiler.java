@@ -33,7 +33,7 @@ import jenergy.profile.data.MethodStatistics;
 import jenergy.profile.data.Period;
 import jenergy.profile.data.ThreadInfo;
 import jenergy.utils.Threads;
-import jenergy.utils.Timer;
+import jenergy.utils.time.Timer;
 
 public class ThreadProfiler implements Profiler
 {
@@ -77,7 +77,7 @@ public class ThreadProfiler implements Profiler
     public ThreadProfiler(Cpu threadCpu, Long tid, Long timeSampling)
     {
         this.cpu = threadCpu;
-        threadInfo = new ThreadInfo(tid, Timer.start());
+        threadInfo = new ThreadInfo(tid, Timer.createAndStart());
         this.timeSample = timeSampling;
     }
 
@@ -167,7 +167,36 @@ public class ThreadProfiler implements Profiler
             methodList = new CopyOnWriteArrayList<MethodInfo>();
             this.threadMethods.put(method.getMethodName(), methodList);
         }
+
         methodList.add(method);
+    }
+
+    /**
+     * @param methodName
+     *            The method name.
+     * @return Returns a {@link List} that represents the stack of the given method.
+     */
+    public List<MethodInfo> getMethodInfoByName(String methodName)
+    {
+        return this.threadMethods.get(methodName);
+    }
+    
+    /**
+     * Returns the caller of the given method.
+     * 
+     * @param method The method to return the caller.
+     * @return The caller of the given method.
+     */
+    public MethodInfo getCallerOf(MethodInfo method)
+    {
+        if (method != null && method.getCalleeMethod() != null)
+        {
+            String caller = MethodInfo.formatMethodName(method.getCalleeMethod().getClassName(), method.getCalleeMethod().getMethodName());
+            List<MethodInfo> stack = getMethodInfoByName(caller);
+
+            return stack.get(stack.size() - 1);
+        }
+        return new MethodInfo("<null method>", Timer.createAndStart());
     }
 
     /**
@@ -182,6 +211,7 @@ public class ThreadProfiler implements Profiler
 
     /**
      * Returns <code>true</code> if the {@link ThreadProfiler} is still active or <code>false</code> otherwise.
+     * 
      * @return <code>true</code> if the {@link ThreadProfiler} is still active or <code>false</code> otherwise.
      */
     public boolean isActive()

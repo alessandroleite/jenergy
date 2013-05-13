@@ -27,6 +27,7 @@ import java.util.Map;
 import jenergy.profile.ThreadProfiler;
 import jenergy.profile.data.MethodStatistics;
 import jenergy.profile.data.ThreadInfo;
+import jenergy.utils.time.Timer;
 
 public final class OutputFile
 {
