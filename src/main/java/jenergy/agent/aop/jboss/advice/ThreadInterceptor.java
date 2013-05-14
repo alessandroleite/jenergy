@@ -18,7 +18,7 @@
  */
 package jenergy.agent.aop.jboss.advice;
 
-import jenergy.agent.Cpu;
+import jenergy.agent.common.Cpu;
 import jenergy.profile.ThreadProfiler;
 
 import org.jboss.aop.Bind;

@@ -20,6 +20,8 @@ package jenergy.agent.aop.jboss.advice.io;
 
 import java.io.FileInputStream;
 
+import jenergy.agent.common.io.FileInputStreamDelegate;
+
 import org.jboss.aop.Bind;
 import org.jboss.aop.InterceptorDef;
 import org.jboss.aop.advice.Interceptor;
@@ -27,8 +29,7 @@ import org.jboss.aop.advice.Scope;
 import org.jboss.aop.joinpoint.Invocation;
 
 @InterceptorDef(scope = Scope.PER_VM)
-//@Bind(pointcut = "call($instanceof{java.io.InputStream}->new(..)) AND !call(jenergy.agent.aop.jboss.advice.io.*->new(..))")
-@Bind(pointcut = "call($instanceof{java.io.FileInputStream}->new(..)) AND !call(jenergy.agent.aop.jboss.advice.io.*->new(..))")
+@Bind(pointcut = "call($instanceof{java.io.FileInputStream}->new(..)) AND !call(jenergy.agent.*->new(..))")
 public class FileInputStreamInterceptor implements Interceptor
 {
     @Override
@@ -46,7 +47,6 @@ public class FileInputStreamInterceptor implements Interceptor
         {
             result = new FileInputStreamDelegate((FileInputStream) result);
         }
-
         return result;
     }
 }

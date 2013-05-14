@@ -21,7 +21,7 @@ package jenergy.profile.data;
 import java.io.Serializable;
 import java.math.BigDecimal;
 
-import jenergy.agent.Cpu.CpuInfo;
+import jenergy.agent.common.Cpu.CpuInfo;
 import jenergy.utils.time.Timer;
 
 public final class ThreadInfo implements Serializable, Cloneable

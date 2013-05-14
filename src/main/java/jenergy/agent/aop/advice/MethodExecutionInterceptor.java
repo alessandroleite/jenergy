@@ -24,7 +24,7 @@ import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.Map;
 
-import jenergy.agent.Cpu;
+import jenergy.agent.common.Cpu;
 import jenergy.profile.data.MethodInfo;
 import jenergy.profile.data.MethodStatistics;
 import jenergy.profile.data.Period;

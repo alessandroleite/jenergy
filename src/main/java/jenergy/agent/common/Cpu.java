@@ -16,7 +16,7 @@
  *    Contributors:
  *          Alessandro Ferreira Leite - the initial implementation.
  */
-package jenergy.agent;
+package jenergy.agent.common;
 
 import java.lang.reflect.Method;
 import java.math.BigDecimal;

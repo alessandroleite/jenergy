@@ -21,7 +21,7 @@ package jenergy.profile.data;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 
-import jenergy.agent.Cpu;
+import jenergy.agent.common.Cpu;
 
 public final class ThreadTimesMonitor extends Thread
 {

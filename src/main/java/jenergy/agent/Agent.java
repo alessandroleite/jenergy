@@ -16,16 +16,13 @@
  *    Contributors:
  *          Alessandro Ferreira Leite - the initial implementation.
  */
-package jenergy.agent.aop.aspectj;
+package jenergy.agent;
 
 import java.lang.instrument.Instrumentation;
 
-import jenergy.agent.common.Cpu;
-import jenergy.utils.ProfileConfig;
-
-
 public final class Agent
 {
+
     /**
      * Private constructor to avoid instance of this class.
      */
@@ -44,9 +41,14 @@ public final class Agent
      */
     public static void premain(String agentArgs, Instrumentation inst)
     {
-        ProfileConfig.start();
-        //Aspects.aspectOf(AspectTrace.class);
-        Cpu.getInstance().activate();
-        org.aspectj.weaver.loadtime.Agent.premain(agentArgs, inst);
+        if (agentArgs == null || agentArgs.trim().isEmpty() || "aspectj".equalsIgnoreCase(agentArgs.trim()))
+        {
+            jenergy.agent.aop.aspectj.Agent.premain(agentArgs, inst);
+        }
+        else if ("jboss-aop".equalsIgnoreCase(agentArgs.trim()))
+        {
+            jenergy.agent.aop.jboss.Agent.premain(agentArgs, inst);
+        }
     }
+
 }

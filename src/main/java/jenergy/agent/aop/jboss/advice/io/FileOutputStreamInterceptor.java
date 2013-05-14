@@ -18,17 +18,19 @@
  */
 package jenergy.agent.aop.jboss.advice.io;
 
-import java.io.InputStream;
+import java.io.FileOutputStream;
 
+import jenergy.agent.common.io.FileOutputStreamDelegate;
+
+import org.jboss.aop.Bind;
 import org.jboss.aop.InterceptorDef;
 import org.jboss.aop.advice.Interceptor;
 import org.jboss.aop.advice.Scope;
 import org.jboss.aop.joinpoint.Invocation;
 
-//execution(* $instanceof{java.io.Reader}->read*(..)) AND !execution(* jenergy.*->*(..))
-@org.jboss.aop.Bind(pointcut = "call(java.io.InputStream->new(..)) AND !execution(* jenergy.*->*(..))")
 @InterceptorDef(scope = Scope.PER_VM)
-public class InputStreamInterceptor implements Interceptor
+@Bind(pointcut = "call($instanceof{java.io.FileOutputStream}->new(..)) AND !call(jenergy.agent.*->new(..))")
+public final class FileOutputStreamInterceptor implements Interceptor
 {
     @Override
     public String getName()
@@ -39,12 +41,12 @@ public class InputStreamInterceptor implements Interceptor
     @Override
     public Object invoke(Invocation invocation) throws Throwable
     {
-        Object result = invocation.invokeNext();
+        Object instance = invocation.invokeNext();
 
-        if (result != null && InputStream.class.isAssignableFrom(result.getClass()))
+        if (instance != null && FileOutputStream.class.isAssignableFrom(instance.getClass()))
         {
-            result = new InputStreamDelegate((InputStream) result);
+            instance = new FileOutputStreamDelegate((FileOutputStream) instance);
         }
-        return result;
+        return instance;
     }
 }

@@ -16,53 +16,59 @@
  *    Contributors:
  *          Alessandro Ferreira Leite - the initial implementation.
  */
-package jenergy.agent.aop.jboss.advice.io;
+package jenergy.agent.common.io;
 
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 
-public class InputStreamDelegate extends InputStream
+/**
+ * 
+ */
+public final class FileInputStreamDelegate extends FileInputStream
 {
     /**
-     * The instance of the real {@link InputStream}. Might not be <code>null</code>.
+     * The instance of the real {@link FileInputStream}.
      */
-    private final InputStream delegator;
+    private final FileInputStream delegator;
 
     /**
-     * Number of bytes read.
+     * The total number of bytes read into the buffer.
      */
-    private int bytes;
+    private volatile int size;
 
     /**
      * 
      * @param input
-     *            The instance of the {@link InputStream} that is monitored.
+     *            The instance of the monitored {@link FileInputStream}.
+     * @throws IOException
+     *             If an I/O error occurs during the read of the file descriptor.
      */
-    public InputStreamDelegate(InputStream input)
+    public FileInputStreamDelegate(FileInputStream input) throws IOException
     {
+        super(input.getFD());
         this.delegator = input;
-    }
-
-    @Override
-    public int read() throws IOException
-    {
-        int result = delegator.read();
-        notify(4);
-        return result;
     }
 
     @Override
     public int read(byte[] b, int off, int len) throws IOException
     {
-        int length = delegator.read(b, off, len);
-        notify(length);
-        return length;
+        int result = delegator.read(b, off, len);
+        notify(result);
+        return result;
+    }
+
+    @Override
+    public int read() throws IOException
+    {
+        int result = super.read();
+        notify(4);
+        return result;
     }
 
     @Override
     public int read(byte[] b) throws IOException
     {
-        int result = this.delegator.read(b);
+        int result = super.read(b);
         notify(result);
         return result;
     }
@@ -77,11 +83,11 @@ public class InputStreamDelegate extends InputStream
     {
         if (result != -1)
         {
-            bytes += result;
+            size += result;
         }
         else
         {
-            System.out.printf("Number of bytes read %s kB\n", (double) bytes / 1024);
+            System.out.printf("Number of bytes read %s kB\n", (double) size / 1024);
         }
     }
 }

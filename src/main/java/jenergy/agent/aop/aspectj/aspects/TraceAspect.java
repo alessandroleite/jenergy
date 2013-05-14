@@ -16,7 +16,7 @@
  *    Contributors:
  *          Alessandro Ferreira Leite - the initial implementation.
  */
-package jenergy.agent.aop.aspectj.advice;
+package jenergy.agent.aop.aspectj.aspects;
 
 import java.lang.reflect.Method;
 
@@ -27,10 +27,10 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.Signature;
 
 @org.aspectj.lang.annotation.Aspect
-public final class AspectTrace extends MethodExecutionInterceptor
+public final class TraceAspect extends MethodExecutionInterceptor
 {
     /**
-     * Around advice to trace every method of application except the methods of the profiler. This advice is applied at runtime.
+     * Around advice to trace every method of application except the methods of the profiler. This is a runtime advice.
      * 
      * @param thisJoinPoint
      *            The joint point reference.

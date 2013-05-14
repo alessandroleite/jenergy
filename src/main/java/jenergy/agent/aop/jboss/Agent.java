@@ -20,7 +20,7 @@ package jenergy.agent.aop.jboss;
 
 import java.lang.instrument.Instrumentation;
 
-import jenergy.agent.Cpu;
+import jenergy.agent.common.Cpu;
 import jenergy.utils.ClassUtils;
 import jenergy.utils.ProfileConfig;
 
