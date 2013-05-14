@@ -68,9 +68,9 @@ public final class FileOutputStreamDelegate extends FileOutputStream
     }
 
     /**
-     * Returns the total number of bytes wrote into the buffer.
+     * Returns the total number of bytes write into the buffer.
      * 
-     * @return the total number of bytes wrote into the buffer.
+     * @return the total number of bytes write into the buffer.
      */
     public int getSize()
     {
