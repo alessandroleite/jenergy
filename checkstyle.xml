@@ -300,7 +300,7 @@
 
 		<!-- Disallow throwing exception base classes -->
 		<module name="IllegalThrows">
-			<property name="ignoredMethodNames" value="finalize,invoke,invokeAdvice,proceed" />
+			<property name="ignoredMethodNames" value="finalize,invoke,invokeAdvice,proceed,aroundFileOutputStreamWriteOperation" />
 		</module>
 
 		<!-- Require all classes to be in a package -->

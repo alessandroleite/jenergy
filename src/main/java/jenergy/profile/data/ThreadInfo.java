@@ -22,7 +22,7 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 
 import jenergy.agent.common.Cpu.CpuInfo;
-import jenergy.utils.time.Timer;
+import jenergy.util.time.Timer;
 
 public final class ThreadInfo implements Serializable, Cloneable
 {

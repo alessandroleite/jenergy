@@ -29,7 +29,7 @@ import jenergy.profile.data.MethodInfo;
 import jenergy.profile.data.MethodStatistics;
 import jenergy.profile.data.Period;
 import jenergy.profile.data.Times;
-import jenergy.utils.OutputFile;
+import jenergy.util.OutputFile;
 
 public abstract class MethodExecutionInterceptor
 {

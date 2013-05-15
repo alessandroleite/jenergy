@@ -20,7 +20,7 @@ package jenergy.agent.aop.jboss.advice.io;
 
 import java.io.FileOutputStream;
 
-import jenergy.agent.common.io.FileOutputStreamDelegate;
+import jenergy.profile.data.MethodInfo;
 
 import org.jboss.aop.Bind;
 import org.jboss.aop.InterceptorDef;
@@ -45,7 +45,8 @@ public final class FileOutputStreamInterceptor implements Interceptor
 
         if (instance != null && FileOutputStream.class.isAssignableFrom(instance.getClass()))
         {
-            instance = new FileOutputStreamDelegate((FileOutputStream) instance);
+            MethodInfo methodInfo = null;
+            //instance = new FileOutputStreamDelegate((FileOutputStream) instance, methodInfo);
         }
         return instance;
     }

@@ -16,11 +16,13 @@
  *    Contributors:
  *          Alessandro Ferreira Leite - the initial implementation.
  */
-package jenergy.utils;
+package jenergy.util;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.log4j.Logger;
 
 public final class ClassUtils
@@ -112,5 +114,35 @@ public final class ClassUtils
             cl = ClassUtils.class.getClassLoader();
         }
         return cl;
+    }
+
+    /**
+     * <p>
+     * Copy property values from the origin bean to the destination bean for all cases where the property names are the same.
+     * </p>
+     * 
+     * <p>
+     * For more details see <code>BeanUtilsBean</code>.
+     * </p>
+     * 
+     * @param src
+     *            Origin bean whose properties are retrieved
+     * @param target
+     *            Destination bean whose properties are modified
+     */
+    public static void copyProperties(Object src, Object target)
+    {
+        try
+        {
+            BeanUtils.copyProperties(target, src);
+        }
+        catch (IllegalAccessException exception)
+        {
+            throw new RuntimeException(exception.getMessage(), exception);
+        }
+        catch (InvocationTargetException exception)
+        {
+            throw new RuntimeException(exception.getMessage(), exception);
+        }
     }
 }

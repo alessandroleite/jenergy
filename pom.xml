@@ -9,7 +9,9 @@
 	<version>0.0.1-SNAPSHOT</version>
 
 	<name>JEnergy</name>
-	<description>A tool to dynamically profile/measure the energy consumption of a Java application/library.</description>
+	<description>A profiler to dynamically measure the energy consumption of a Java(tm) library/application 
+	 considering the use of the resources: CPU, memory, network and disk.
+	</description>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -17,6 +19,7 @@
 		<maven.build.timestamp.format>yyyyMMdd_HHmm</maven.build.timestamp.format>
 		<build.number>${maven.build.timestamp}</build.number>
 		<deploy-repo.url>file:///${env.DEFAULT_MAVEN_REPO_URL}</deploy-repo.url>
+		<checkstyle.file>${project.basedir}/checkstyle.xml</checkstyle.file>
 		<compile.source>1.6</compile.source>
 
 		<ajdt.version>1.7.2</ajdt.version>
@@ -29,7 +32,7 @@
 		<license-header-file>${basedir}/LICENSE.txt</license-header-file>
 		<jboss-aop.version>2.2.0.Final</jboss-aop.version>
 		<commons-lang.version>2.6</commons-lang.version>
-		<checkstyle.file>${project.basedir}/checkstyle.xml</checkstyle.file>
+		<commons-beanutils.version>1.8.3</commons-beanutils.version>
 	</properties>
 
 	<distributionManagement>
@@ -100,7 +103,7 @@
 			<artifactId>commons-lang</artifactId>
 			<version>${commons-lang.version}</version>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.aspectj</groupId>
 			<artifactId>aspectjrt</artifactId>
@@ -111,6 +114,12 @@
 			<groupId>org.aspectj</groupId>
 			<artifactId>aspectjweaver</artifactId>
 			<version>${aspectjweaver.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>commons-beanutils</groupId>
+			<artifactId>commons-beanutils</artifactId>
+			<version>${commons-beanutils.version}</version>
 		</dependency>
 
 	</dependencies>

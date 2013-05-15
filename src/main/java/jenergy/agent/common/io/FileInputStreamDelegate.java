@@ -21,9 +21,10 @@ package jenergy.agent.common.io;
 import java.io.FileInputStream;
 import java.io.IOException;
 
-/**
- * 
- */
+import jenergy.profile.data.IOInfo;
+import jenergy.profile.data.IOInfo.IOActivityType;
+import jenergy.profile.data.MethodInfo;
+
 public final class FileInputStreamDelegate extends FileInputStream
 {
     /**
@@ -32,62 +33,63 @@ public final class FileInputStreamDelegate extends FileInputStream
     private final FileInputStream delegator;
 
     /**
-     * The total number of bytes read into the buffer.
+     * The reference to the I/O activity to notify every time that an write operation had been called.
      */
-    private volatile int size;
+    private final IOInfo info;
 
     /**
      * 
      * @param input
      *            The instance of the monitored {@link FileInputStream}.
+     * @param ioInfo
+     *            The reference to the {@link IOInfo} to be used by this stream.
      * @throws IOException
      *             If an I/O error occurs during the read of the file descriptor.
      */
-    public FileInputStreamDelegate(FileInputStream input) throws IOException
+    private FileInputStreamDelegate(FileInputStream input, IOInfo ioInfo) throws IOException
     {
         super(input.getFD());
         this.delegator = input;
+        this.info = ioInfo;
+    }
+
+    /**
+     * 
+     * @param input
+     *            The instance of the monitored {@link FileInputStream}.
+     * @param method
+     *            The method that called the read operation.
+     * @throws IOException
+     *             If an I/O error occurs during the read of the file descriptor.
+     */
+    public FileInputStreamDelegate(FileInputStream input, MethodInfo method) throws IOException
+    {
+        this(input, new IOInfo(IOActivityType.READ, method));
     }
 
     @Override
     public int read(byte[] b, int off, int len) throws IOException
     {
-        int result = delegator.read(b, off, len);
-        notify(result);
-        return result;
+        return delegator.read(b, off, len);
     }
 
     @Override
     public int read() throws IOException
     {
-        int result = super.read();
-        notify(4);
-        return result;
+        return super.read();
     }
 
     @Override
     public int read(byte[] b) throws IOException
     {
-        int result = super.read(b);
-        notify(result);
-        return result;
+        return super.read(b);
     }
 
     /**
-     * Simulates a publish/subscriber behavior.
-     * 
-     * @param result
-     *            The number of bytes reader.
+     * @return the info
      */
-    private void notify(int result)
+    public IOInfo getInfo()
     {
-        if (result != -1)
-        {
-            size += result;
-        }
-        else
-        {
-            System.out.printf("Number of bytes read %s kB\n", (double) size / 1024);
-        }
+        return info;
     }
 }

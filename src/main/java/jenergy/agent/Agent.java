@@ -20,6 +20,9 @@ package jenergy.agent;
 
 import java.lang.instrument.Instrumentation;
 
+/**
+ * JVM hook to statically load the javaagent at startup.
+ */
 public final class Agent
 {
 
@@ -32,7 +35,7 @@ public final class Agent
     }
 
     /**
-     * The method to start the instrumentation of the program.
+     * This method is called JVM had been initialized. After that, then the main method of the target application will be called.
      * 
      * @param agentArgs
      *            The agent's arguments. This agent does not require any argument.

@@ -20,7 +20,9 @@ package jenergy.agent.aop.aspectj.aspects;
 
 import java.io.FileInputStream;
 
+import jenergy.agent.common.Cpu;
 import jenergy.agent.common.io.FileInputStreamDelegate;
+import jenergy.profile.data.MethodInfo;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -42,6 +44,8 @@ public class FileInputStreamAspect
     @Around("call(java.io.FileInputStream+.new(..)) && !within(jenergy..*)")
     public Object invoke(final ProceedingJoinPoint thisJoinPoint) throws Throwable
     {
-        return new FileInputStreamDelegate((FileInputStream) thisJoinPoint.proceed());
+        MethodInfo method = Cpu.getInstance().currentThread().peekMethodInfo();
+        return new FileInputStreamDelegate((FileInputStream) thisJoinPoint.proceed(), method);
     }
+    
 }

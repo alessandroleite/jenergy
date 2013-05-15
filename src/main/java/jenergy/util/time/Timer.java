@@ -16,7 +16,7 @@
  *    Contributors:
  *          Alessandro Ferreira Leite - the initial implementation.
  */
-package jenergy.utils.time;
+package jenergy.util.time;
 
 import java.util.concurrent.TimeUnit;
 

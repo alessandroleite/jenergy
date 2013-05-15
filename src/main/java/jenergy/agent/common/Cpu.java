@@ -25,8 +25,8 @@ import java.util.Collection;
 import jenergy.profile.ThreadProfiler;
 import jenergy.profile.data.MethodInfo;
 import jenergy.profile.data.ThreadInfo;
-import jenergy.utils.ThreadProfilers;
-import jenergy.utils.time.Timer;
+import jenergy.util.ThreadProfilers;
+import jenergy.util.time.Timer;
 
 public final class Cpu
 {
@@ -247,6 +247,16 @@ public final class Cpu
     }
 
     /**
+     * Returns a reference to the {@link ThreadProfiler} of the currently executing thread.
+     * 
+     * @return The {@link ThreadProfiler} of the current thread.
+     */
+    public ThreadProfiler currentThread()
+    {
+        return this.getThreadProfiler(Thread.currentThread().getId());
+    }
+
+    /**
      * Returns the total CPU time so far in nanoseconds.
      * 
      * @return the total CPU time so far in nanoseconds.
@@ -302,4 +312,5 @@ public final class Cpu
         // long interval = Long.parseLong(System.getProperty("jenergy.collect.interval", "10"));
         // new ThreadTimesMonitor(interval, this).start();
     }
+
 }

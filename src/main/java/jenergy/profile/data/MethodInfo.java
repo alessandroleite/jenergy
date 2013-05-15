@@ -22,7 +22,7 @@ import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 
-import jenergy.utils.time.Timer;
+import jenergy.util.time.Timer;
 
 public final class MethodInfo implements Serializable
 {
@@ -60,6 +60,11 @@ public final class MethodInfo implements Serializable
      * The data about the caller.
      */
     private final StackTraceElement calleeMethod;
+
+    /**
+     * The reference of the monitored method.
+     */
+    private Method methodRef;
 
     /**
      * @param name
@@ -108,6 +113,7 @@ public final class MethodInfo implements Serializable
     public MethodInfo(Method method, Timer methodTimer)
     {
         this(formatMethodName(method.getDeclaringClass(), method.getName()), methodTimer, Thread.currentThread().getId());
+        this.methodRef = method;
     }
 
     /**
@@ -168,6 +174,14 @@ public final class MethodInfo implements Serializable
     public String getMethodName()
     {
         return methodName;
+    }
+    
+    /**
+     * @return the methodRef
+     */
+    public Method getMethodRef()
+    {
+        return methodRef;
     }
 
     /**
@@ -231,4 +245,5 @@ public final class MethodInfo implements Serializable
     {
         return new StringBuilder(className).append(".").append(methodName).append("#").append(Thread.currentThread().getId()).toString();
     }
+    
 }

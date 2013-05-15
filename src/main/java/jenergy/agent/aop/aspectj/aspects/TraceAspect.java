@@ -21,10 +21,9 @@ package jenergy.agent.aop.aspectj.aspects;
 import java.lang.reflect.Method;
 
 import jenergy.agent.aop.advice.MethodExecutionInterceptor;
-
+import jenergy.util.AspectjUtils;
 
 import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.Signature;
 
 @org.aspectj.lang.annotation.Aspect
 public final class TraceAspect extends MethodExecutionInterceptor
@@ -42,25 +41,11 @@ public final class TraceAspect extends MethodExecutionInterceptor
     @org.aspectj.lang.annotation.Around("execution(* *(..)) && !within(jenergy..*)")
     public Object invoke(final ProceedingJoinPoint thisJoinPoint) throws Throwable
     {
-        Method method = this.getMethod(thisJoinPoint.getSignature());
+        Method method = AspectjUtils.getMethod(thisJoinPoint.getSignature());
         return this.invokeAdvice(method, thisJoinPoint);
     }
 
-    /**
-     * Returns the reference of the {@link Method} of the advice.
-     * 
-     * @param signature
-     *            The advice signature.
-     * @return The method of the advice. It's never <code>null</code>.
-     * @throws Exception
-     *             If it's not possible to invoke the private method in the JVM.
-     */
-    private Method getMethod(Signature signature) throws Exception
-    {
-        Method m = signature.getClass().getDeclaredMethod("getMethod");
-        m.setAccessible(true);
-        return (Method) m.invoke(signature);
-    }
+    
 
     @Override
     protected Object proceed(Object invoker) throws Throwable

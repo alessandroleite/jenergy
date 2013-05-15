@@ -20,6 +20,7 @@ package jenergy.profile;
 
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -32,8 +33,8 @@ import jenergy.profile.data.MethodInfo;
 import jenergy.profile.data.MethodStatistics;
 import jenergy.profile.data.Period;
 import jenergy.profile.data.ThreadInfo;
-import jenergy.utils.Threads;
-import jenergy.utils.time.Timer;
+import jenergy.util.Threads;
+import jenergy.util.time.Timer;
 
 public class ThreadProfiler implements Profiler
 {
@@ -43,6 +44,11 @@ public class ThreadProfiler implements Profiler
      * method execution.
      */
     private final Map<String, List<MethodInfo>> threadMethods = new ConcurrentHashMap<String, List<MethodInfo>>();
+    
+    /**
+     * The stack trace of this thread.
+     */
+    private final List<Method> stack = new CopyOnWriteArrayList<Method>();
 
     /**
      * The Cpu instance of the thread.
@@ -167,8 +173,47 @@ public class ThreadProfiler implements Profiler
             methodList = new CopyOnWriteArrayList<MethodInfo>();
             this.threadMethods.put(method.getMethodName(), methodList);
         }
+        
+        this.stack.add(method.getMethodRef());
 
         methodList.add(method);
+    }
+    
+
+    /**
+     * Returns an array of methods representing the stack dump of the thread. 
+     * 
+     * @return An array of methods representing the stack dump of the thread.
+     */
+    public Method[] getStackTrace()
+    {
+        Method[] stackTrace = new Method[this.stack.size()];
+
+        int size = this.stack.size() - 1;
+        for (int i = size; i >= 0; i++)
+        {
+            stackTrace[i - size] = stack.get(i);
+        }
+        
+        return stackTrace;
+    }
+    
+    /**
+     * Removes the method of the head of this thread stack.
+     * @return The method removed or <code>null</code> if the stack is empty.
+     */
+    public Method popStack()
+    {
+        return this.stack.remove(this.stack.size() - 1);
+    }
+    
+    /**
+     * Returns the method of the head (top) of this thread stack.
+     * @return The method of the head (top) of this thread stack or <code>null</code> if the stack is empty.
+     */
+    public Method peekStack()
+    {
+        return this.stack.get(this.stack.size() - 1);
     }
 
     /**
@@ -192,11 +237,58 @@ public class ThreadProfiler implements Profiler
         if (method != null && method.getCalleeMethod() != null)
         {
             String caller = MethodInfo.formatMethodName(method.getCalleeMethod().getClassName(), method.getCalleeMethod().getMethodName());
-            List<MethodInfo> stack = getMethodInfoByName(caller);
+            List<MethodInfo> methodStack = getMethodInfoByName(caller);
 
-            return stack.get(stack.size() - 1);
+            return methodStack.get(methodStack.size() - 1);
         }
         return new MethodInfo("<null method>", Timer.createAndStart());
+    }
+
+    /**
+     * Returns a reference to the {@link MethodInfo} of the given {@link Method}.
+     * 
+     * @param method
+     *            The method to return its {@link MethodInfo} reference. Might not be <code>null</code>.
+     * @return A reference to the {@link MethodInfo} of the given {@link Method} or <code>null</code> if the {@link Method} does not exists in this
+     *         {@link ThreadProfiler}.
+     * @throws NullPointerException If the given method was <code>null</code>
+     */
+    public MethodInfo getMethodInfoOf(Method method)
+    {
+        if (method == null)
+        {
+            throw new NullPointerException("The method might not be null!");
+        }
+        
+        String caller = MethodInfo.formatMethodName(method.getDeclaringClass().getName(), method.getName());
+        
+        return getMethodInfoOf(caller);
+    }
+    
+    /**
+     * Returns a reference to the {@link MethodInfo} of the given {@link Method}.
+     * 
+     * @param method
+     *            The method to return its {@link MethodInfo} reference. Might not be <code>null</code>.
+     * @return A reference to the {@link MethodInfo} of the given {@link Method} or <code>null</code> if the {@link Method} does not exists in this
+     *         {@link ThreadProfiler}.
+     * @throws NullPointerException If the given method was <code>null</code>
+     */
+    public MethodInfo getMethodInfoOf(String method)
+    {
+        List<MethodInfo> methodStack = this.getMethodInfoByName(method);
+        return methodStack == null || methodStack.isEmpty() ? null : methodStack.get(methodStack.size() - 1);
+    }
+    
+    /**
+     * Returns the {@link MethodInfo} of the method that is currently executed by this thread.
+     * 
+     * @return the {@link MethodInfo} of the method that is currently executed by this thread or <code>null</code> if this thread is not executing any
+     *         method.
+     */
+    public MethodInfo peekMethodInfo()
+    {
+        return getMethodInfoOf(this.peekStack());
     }
 
     /**

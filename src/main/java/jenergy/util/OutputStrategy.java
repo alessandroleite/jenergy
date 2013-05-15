@@ -16,7 +16,7 @@
  *    Contributors:
  *          Alessandro Ferreira Leite - the initial implementation.
  */
-package jenergy.utils;
+package jenergy.util;
 
 public enum OutputStrategy
 {
