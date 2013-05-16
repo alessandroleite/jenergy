@@ -21,7 +21,7 @@ package jenergy.agent.aop.aspectj;
 import java.lang.instrument.Instrumentation;
 
 import jenergy.agent.common.Cpu;
-import jenergy.util.ProfileConfig;
+import jenergy.agent.common.config.ProfileConfig;
 
 
 public final class Agent

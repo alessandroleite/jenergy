@@ -20,6 +20,9 @@ package jenergy.agent.aop.jboss.advice.io;
 
 import java.io.FileInputStream;
 
+import jenergy.agent.aop.jboss.util.JbossUtils;
+import jenergy.agent.common.Cpu;
+import jenergy.agent.common.io.FileInputStreamDelegate;
 import jenergy.profile.data.MethodInfo;
 
 import org.jboss.aop.Bind;
@@ -45,8 +48,10 @@ public class FileInputStreamInterceptor implements Interceptor
 
         if (result != null && FileInputStream.class.isAssignableFrom(result.getClass()))
         {
-            MethodInfo method = null;
-            // result = new FileInputStreamDelegate((FileInputStream) result, method);
+            MethodInfo method = Cpu.getInstance().currentThread().peekMethodInfo();
+            result = JbossUtils.newInstance(invocation, FileInputStreamDelegate.class, result, method);
+            result.getClass().getDeclaredMethod("attach", jenergy.agent.common.util.Observer.class)
+                    .invoke(result, ((FileInputStreamDelegate) result).getInfo());
         }
         return result;
     }

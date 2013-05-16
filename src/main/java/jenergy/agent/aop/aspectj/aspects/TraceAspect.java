@@ -21,7 +21,7 @@ package jenergy.agent.aop.aspectj.aspects;
 import java.lang.reflect.Method;
 
 import jenergy.agent.aop.advice.MethodExecutionInterceptor;
-import jenergy.util.AspectjUtils;
+import jenergy.agent.aop.aspectj.util.AspectjUtils;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 
@@ -44,8 +44,6 @@ public final class TraceAspect extends MethodExecutionInterceptor
         Method method = AspectjUtils.getMethod(thisJoinPoint.getSignature());
         return this.invokeAdvice(method, thisJoinPoint);
     }
-
-    
 
     @Override
     protected Object proceed(Object invoker) throws Throwable

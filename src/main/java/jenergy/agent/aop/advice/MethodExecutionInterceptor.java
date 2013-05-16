@@ -25,11 +25,11 @@ import java.math.BigDecimal;
 import java.util.Map;
 
 import jenergy.agent.common.Cpu;
+import jenergy.agent.common.util.OutputFile;
 import jenergy.profile.data.MethodInfo;
 import jenergy.profile.data.MethodStatistics;
 import jenergy.profile.data.Period;
 import jenergy.profile.data.Times;
-import jenergy.util.OutputFile;
 
 public abstract class MethodExecutionInterceptor
 {

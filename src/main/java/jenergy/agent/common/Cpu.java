@@ -22,11 +22,10 @@ import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.Collection;
 
+import jenergy.agent.common.util.time.Timer;
 import jenergy.profile.ThreadProfiler;
 import jenergy.profile.data.MethodInfo;
 import jenergy.profile.data.ThreadInfo;
-import jenergy.util.ThreadProfilers;
-import jenergy.util.time.Timer;
 
 public final class Cpu
 {

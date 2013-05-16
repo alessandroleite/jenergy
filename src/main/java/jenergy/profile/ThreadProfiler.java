@@ -29,12 +29,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import jenergy.agent.common.Cpu;
+import jenergy.agent.common.util.Threads;
+import jenergy.agent.common.util.time.Timer;
 import jenergy.profile.data.MethodInfo;
 import jenergy.profile.data.MethodStatistics;
 import jenergy.profile.data.Period;
 import jenergy.profile.data.ThreadInfo;
-import jenergy.util.Threads;
-import jenergy.util.time.Timer;
 
 public class ThreadProfiler implements Profiler
 {

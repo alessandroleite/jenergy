@@ -18,10 +18,10 @@
  */
 package jenergy.agent.aop.aspectj.aspects;
 
+import jenergy.agent.aop.aspectj.util.AspectjUtils;
 import jenergy.agent.common.Cpu;
 import jenergy.agent.common.io.FileInputStreamDelegate;
 import jenergy.profile.data.MethodInfo;
-import jenergy.util.AspectjUtils;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -45,7 +45,7 @@ public class FileInputStreamAspect
     {
         MethodInfo method = Cpu.getInstance().currentThread().peekMethodInfo();
         FileInputStreamDelegate instance = AspectjUtils.newInstance(thisJoinPoint, FileInputStreamDelegate.class, thisJoinPoint.proceed(), method);
-        instance.getClass().getDeclaredMethod("attach", jenergy.util.Observer.class).invoke(instance, instance.getInfo());
+        instance.getClass().getDeclaredMethod("attach", jenergy.agent.common.util.Observer.class).invoke(instance, instance.getInfo());
         return instance;
     }
 

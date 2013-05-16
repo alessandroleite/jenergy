@@ -16,7 +16,7 @@
  *    Contributors:
  *          Alessandro Ferreira Leite - the initial implementation.
  */
-package jenergy.util;
+package jenergy.agent.common.util;
 
 /**
  * Utility class to work with threads.

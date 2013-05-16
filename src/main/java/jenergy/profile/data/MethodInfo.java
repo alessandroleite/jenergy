@@ -22,7 +22,7 @@ import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 
-import jenergy.util.time.Timer;
+import jenergy.agent.common.util.time.Timer;
 
 public final class MethodInfo implements Serializable
 {

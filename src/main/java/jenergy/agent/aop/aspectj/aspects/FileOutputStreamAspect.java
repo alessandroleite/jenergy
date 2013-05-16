@@ -18,11 +18,12 @@
  */
 package jenergy.agent.aop.aspectj.aspects;
 
+
+import jenergy.agent.aop.aspectj.util.AspectjUtils;
 import jenergy.agent.common.Cpu;
 import jenergy.agent.common.io.FileOutputStreamDelegate;
-import jenergy.util.AspectjUtils;
-import jenergy.util.Observer;
-import jenergy.util.Subject;
+import jenergy.agent.common.util.Observer;
+import jenergy.agent.common.util.Subject;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -40,7 +41,7 @@ public class FileOutputStreamAspect
     private Subject subject;
 
     /**
-     * Around advice to replace all instances of {@link FileOutputStream} by {@link FileOutputStreamDelegate}. This is a runtime advice.
+     * Around advice to replace all instances of {@link java.io.FileOutputStream} by {@link FileOutputStreamDelegate}. This is a runtime advice.
      * 
      * @param thisJoinPoint
      *            The joinpoint reference.
@@ -54,7 +55,7 @@ public class FileOutputStreamAspect
     {
         FileOutputStreamDelegate output = AspectjUtils.newInstance(thisJoinPoint, FileOutputStreamDelegate.class, thisJoinPoint.proceed(), Cpu
                 .getInstance().currentThread().peekMethodInfo());
-        output.getClass().getDeclaredMethod("attach", jenergy.util.Observer.class).invoke(output, output.getInfo());
+        output.getClass().getDeclaredMethod("attach", jenergy.agent.common.util.Observer.class).invoke(output, output.getInfo());
         return output;
     }
 

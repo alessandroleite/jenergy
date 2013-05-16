@@ -22,8 +22,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import jenergy.util.Observer;
-import jenergy.util.Subject;
+import jenergy.agent.common.util.Observer;
+import jenergy.agent.common.util.Subject;
 
 public abstract aspect ObserverPatternAspect
 {

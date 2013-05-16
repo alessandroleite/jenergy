@@ -19,7 +19,7 @@
 package jenergy.agent.common.aspect;
 
 import jenergy.agent.common.io.FileInputStreamDelegate;
-import jenergy.util.Subject;
+import jenergy.agent.common.util.Subject;
 
 public aspect FileInputStreamDelegateAspect extends ObserverPatternAspect
 {
@@ -35,7 +35,7 @@ public aspect FileInputStreamDelegateAspect extends ObserverPatternAspect
     {
         try
         {
-            input.getClass().getMethod("attach", jenergy.util.Observer.class).invoke(input, input.getInfo());
+            input.getClass().getMethod("attach", jenergy.agent.common.util.Observer.class).invoke(input, input.getInfo());
         }
         catch (Exception exception)
         {

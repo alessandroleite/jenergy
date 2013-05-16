@@ -20,8 +20,8 @@ package jenergy.profile.data;
 
 import java.io.Serializable;
 
-import jenergy.util.Observer;
-import jenergy.util.Subject;
+import jenergy.agent.common.util.Observer;
+import jenergy.agent.common.util.Subject;
 
 public class IOInfo implements Serializable, Observer
 {

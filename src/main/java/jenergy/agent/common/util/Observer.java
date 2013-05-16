@@ -16,7 +16,7 @@
  *    Contributors:
  *          Alessandro Ferreira Leite - the initial implementation.
  */
-package jenergy.util;
+package jenergy.agent.common.util;
 
 public interface Observer
 {

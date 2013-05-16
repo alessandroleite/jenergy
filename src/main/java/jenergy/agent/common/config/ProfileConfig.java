@@ -16,12 +16,14 @@
  *    Contributors:
  *          Alessandro Ferreira Leite - the initial implementation.
  */
-package jenergy.util;
+package jenergy.agent.common.config;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
+
+import jenergy.agent.common.util.ClassUtils;
 
 public final class ProfileConfig
 {

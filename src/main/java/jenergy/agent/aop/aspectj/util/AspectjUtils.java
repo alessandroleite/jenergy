@@ -16,7 +16,7 @@
  *    Contributors:
  *          Alessandro Ferreira Leite - the initial implementation.
  */
-package jenergy.util;
+package jenergy.agent.aop.aspectj.util;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;

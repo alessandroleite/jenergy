@@ -21,8 +21,8 @@ package jenergy.agent.aop.jboss;
 import java.lang.instrument.Instrumentation;
 
 import jenergy.agent.common.Cpu;
-import jenergy.util.ClassUtils;
-import jenergy.util.ProfileConfig;
+import jenergy.agent.common.config.ProfileConfig;
+import jenergy.agent.common.util.ClassUtils;
 
 public final class Agent
 {

@@ -16,7 +16,7 @@
  *    Contributors:
  *          Alessandro Ferreira Leite - the initial implementation.
  */
-package jenergy.util;
+package jenergy.agent.common.util;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -24,10 +24,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Map;
 
+import jenergy.agent.common.util.time.Timer;
 import jenergy.profile.ThreadProfiler;
 import jenergy.profile.data.MethodStatistics;
 import jenergy.profile.data.ThreadInfo;
-import jenergy.util.time.Timer;
 
 public final class OutputFile
 {

@@ -20,7 +20,7 @@ package jenergy.profile.data;
 
 import java.text.DecimalFormat;
 
-import jenergy.util.time.Timer;
+import jenergy.agent.common.util.time.Timer;
 
 public class MethodStatistics implements Comparable<MethodStatistics>
 {
