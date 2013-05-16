@@ -1,9 +1,29 @@
+/**
+ * Copyright 2013 Contributors
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *        http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ *
+ *    Contributors:
+ *          Alessandro Ferreira Leite - the initial implementation.
+ */
 package jenergy.agent.aop.jboss.util;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.List;
 
-import org.jboss.aop.joinpoint.ConstructorInvocation;
 import org.jboss.aop.joinpoint.Invocation;
 
 public final class JbossUtils
@@ -16,7 +36,7 @@ public final class JbossUtils
     {
         throw new UnsupportedOperationException();
     }
-    
+
     /**
      * 
      * @param thisJoinPoint
@@ -52,18 +72,29 @@ public final class JbossUtils
      *             If it is not a constructor joinpoint.
      * @see ConstructorInvocation
      */
-    public static <T> T newInstance(Invocation thisJoinPoint, Class<T> clazz, Object... newArgs) throws NoSuchMethodException,
-            SecurityException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
+    public static <T> T newInstance(Invocation thisJoinPoint, Class<T> clazz, Object... newArgs) throws NoSuchMethodException, SecurityException,
+            InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {
-        ConstructorInvocation invoker = (ConstructorInvocation) thisJoinPoint;
+        Constructor<?> constructor;
+        Object[] args;
 
-        Class<?>[] parameterTypes = new Class[invoker.getConstructor().getParameterTypes().length + (newArgs != null ? newArgs.length : 0)];
+        try
+        {
+            constructor = getConstructor(thisJoinPoint.getClass().getSuperclass().getSuperclass(), thisJoinPoint);
+            args = getArgs(thisJoinPoint);
+        }
+        catch (Exception exception)
+        {
+            throw new RuntimeException(exception.getMessage(), exception);
+        }
+
+        Class<?>[] parameterTypes = new Class[constructor.getParameterTypes().length + (newArgs != null ? newArgs.length : 0)];
         Object[] newConstructorArgs = new Object[parameterTypes.length];
 
-        for (int i = 0; i < invoker.getConstructor().getParameterTypes().length; i++)
+        for (int i = 0; i < constructor.getParameterTypes().length; i++)
         {
-            parameterTypes[i] = invoker.getConstructor().getParameterTypes()[i];
-            newConstructorArgs[i] = invoker.getArguments()[i];
+            parameterTypes[i] = constructor.getParameterTypes()[i];
+            newConstructorArgs[i] = args[i];
         }
 
         for (int i = 0, j = newConstructorArgs.length - newArgs.length; i < newArgs.length; i++, j++)
@@ -72,9 +103,94 @@ public final class JbossUtils
             newConstructorArgs[j] = newArgs[i];
         }
 
-        Constructor<T> constructor = clazz.getConstructor(parameterTypes);
-        constructor.setAccessible(true);
-        return constructor.newInstance(newConstructorArgs);
+        Constructor<T> newConstructor = clazz.getConstructor(parameterTypes);
+        newConstructor.setAccessible(true);
+        return newConstructor.newInstance(newConstructorArgs);
     }
 
+    /**
+     * Returns the reference of the {@link Method} of the advice.
+     * 
+     * @param clazz
+     *            The class where the constructor is declared.
+     * @param invocation
+     *            The advice invocation.
+     * @param <T>
+     *            The class where the constructor was declared.
+     * @return The method of the advice. It will be <code>null</code> if the joinpoint's {@link Signature} is not a {@link MethodSignature}.
+     * @throws Exception
+     *             If it's not possible to invoke the private method in the JVM.
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> Constructor<T> getConstructor(Class<?> clazz, Invocation invocation) throws Exception
+    {
+        return (Constructor<T>) getField(clazz, invocation, "constructor");
+    }
+
+    /**
+     * Returns the reference of the {@link Method} of the advice.
+     * 
+     * @param invocation
+     *            The advice invocation.
+     * @param name
+     *            The name of the field.
+     * @param <T>
+     *            The class where the constructor was declared.
+     * @return The method of the advice. It will be <code>null</code> if the joinpoint's {@link Signature} is not a {@link MethodSignature}.
+     * @throws Exception
+     *             If it's not possible to invoke the private method in the JVM.
+     */
+    public static <T> T getField(Invocation invocation, String name) throws Exception
+    {
+        return getField(invocation.getClass(), invocation, name);
+    }
+
+    /**
+     * Returns the reference of the {@link Method} of the advice.
+     * 
+     * @param clazz
+     *            The {@link Class} where the field is declared.
+     * @param invocation
+     *            The advice invocation.
+     * @param name
+     *            The name of the field.
+     * @param <T>
+     *            The class where the constructor was declared.
+     * @return The method of the advice. It will be <code>null</code> if the joinpoint's {@link Signature} is not a {@link MethodSignature}.
+     * @throws Exception
+     *             If it's not possible to invoke the private method in the JVM.
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> T getField(Class<?> clazz, Invocation invocation, String name) throws Exception
+    {
+        Field field = clazz.getDeclaredField(name);
+        field.setAccessible(true);
+        return (T) field.get(invocation);
+    }
+
+    /**
+     * Returns the arguments of the target method of the poincut. In this case, this method consider that each method argument is a field named
+     * arg[0-9]*.
+     * 
+     * @param invocation
+     *            The reference to the poincut.
+     * @return The arguments of the target method of the poincut. In this case, this method consider that each method argument is a field named
+     *         arg[0-9]*.
+     * @throws Exception If it's not possible to get the value of private fields in the JVM.
+     */
+    private static Object[] getArgs(Invocation invocation) throws Exception
+    {
+        List<Object> values = new ArrayList<Object>();
+        Field[] fields = invocation.getClass().getSuperclass().getDeclaredFields();
+
+        for (int i = 0; i < fields.length; i++)
+        {
+            if (fields[i].getName().length() > 3 && fields[i].getName().startsWith("arg") && Character.isDigit(fields[i].getName().charAt(3)))
+            {
+                fields[i].setAccessible(true);
+                values.add(fields[i].get(invocation));
+            }
+        }
+        return values.toArray();
+    }
 }
