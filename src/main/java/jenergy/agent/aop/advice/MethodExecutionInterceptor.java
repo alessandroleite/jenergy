@@ -51,34 +51,45 @@ public abstract class MethodExecutionInterceptor
         final long tid = Thread.currentThread().getId();
         final ThreadMXBean bean = ManagementFactory.getThreadMXBean();
 
-        final MethodInfo methodCalled = Cpu.getInstance().monitor(method);
-        final MethodInfo caller = Cpu.getInstance().getThreadProfiler(tid).getCallerOf(methodCalled);
+        MethodInfo caller = null;
         
-        methodCalled.setTimes(new Times(tid));
+        if (Cpu.getInstance().getThreadProfiler(tid) != null)
+        {
+            caller = Cpu.getInstance().getThreadProfiler(tid).peekMethodInfo();
+        } 
+        
+        final MethodInfo called = Cpu.getInstance().monitor(method);
+        
+        called.setTimes(new Times(tid));
 
         try
         {
             if (bean != null)
             {
-                methodCalled.getTimes().setCpuTime(new Period(bean.getCurrentThreadCpuTime()));
-                methodCalled.getTimes().setUserTime(new Period(bean.getCurrentThreadUserTime()));
+                called.getTimes().setCpuTime(new Period(bean.getCurrentThreadCpuTime()));
+                called.getTimes().setUserTime(new Period(bean.getCurrentThreadUserTime()));
             }
 
-            methodCalled.getTimer().restart();
-            //caller.getTimer().suspend();
+            if (caller != null)
+            {
+                caller.getTimer().suspend();
+            }
             
+            called.getTimer().restart();
             result = proceed(invoker);
         }
         finally
         {
-            methodCalled.getTimer().stop();
+            called.getTimer().stop();
+            Cpu.getInstance().getThreadProfiler(tid).popStack();
+            
             if (bean != null)
             {
                 long cpuTime = bean.getCurrentThreadCpuTime();
                 long userTime = bean.getCurrentThreadUserTime();
 
-                methodCalled.getTimes().getCpuTime().setEndTime(cpuTime);
-                methodCalled.getTimes().getUserTime().setEndTime(userTime);
+                called.getTimes().getCpuTime().setEndTime(cpuTime);
+                called.getTimes().getUserTime().setEndTime(userTime);
             }
 
             if ("main".equalsIgnoreCase(method.getName()))
@@ -86,7 +97,7 @@ public abstract class MethodExecutionInterceptor
                 Cpu.getInstance().getThreadProfiler(tid).stop();
                 Cpu.getInstance().getThread(tid).getTimer().stop();
 
-                double power = Cpu.getInstance().getThreadProfiler(tid).computeThreadPowerConsumption(methodCalled.getTimes().getUserTime().time());
+                double power = Cpu.getInstance().getThreadProfiler(tid).computeThreadPowerConsumption(called.getTimes().getUserTime().time());
                 Cpu.getInstance().getThreadProfiler(tid).getThreadInfo().setPower(BigDecimal.valueOf(power));
 
                 Map<String, MethodStatistics> methodsStatistics = Cpu.getInstance().getThreadProfiler(tid)
@@ -97,9 +108,11 @@ public abstract class MethodExecutionInterceptor
                 System.out.println("--- main ---");
             }
             
-            //caller.getTimer().resume();
+            if (caller != null)
+            {
+                caller.getTimer().resume();
+            }
         }
-
         return result;
     }
 

@@ -18,8 +18,12 @@
  */
 package jenergy.agent.common.io;
 
+import java.io.File;
+import java.io.FileDescriptor;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.channels.FileChannel;
 
 import jenergy.profile.data.IOInfo;
 import jenergy.profile.data.IOInfo.IOActivityType;
@@ -33,38 +37,84 @@ public final class FileInputStreamDelegate extends FileInputStream
     private final FileInputStream delegator;
 
     /**
-     * The reference to the I/O activity to notify every time that an write operation had been called.
+     * The reference to the I/O activity to notify every time that a write operation occur.
      */
     private final IOInfo info;
 
     /**
+     * Creates a {@link FileInputStream} by opening a connection to an actual file, the file named by the path name name in the file system. A new
+     * {@link FileDescriptor} object is created to represent this file connection. First, if there is a security manager, its checkRead method is
+     * called with the name argument as its argument.
      * 
-     * @param input
-     *            The instance of the monitored {@link FileInputStream}.
-     * @param ioInfo
-     *            The reference to the {@link IOInfo} to be used by this stream.
-     * @throws IOException
-     *             If an I/O error occurs during the read of the file descriptor.
-     */
-    private FileInputStreamDelegate(FileInputStream input, IOInfo ioInfo) throws IOException
-    {
-        super(input.getFD());
-        this.delegator = input;
-        this.info = ioInfo;
-    }
-
-    /**
+     * If the named file does not exist, is a directory rather than a regular file, or for some other reason cannot be opened for reading then a
+     * {@link FileNotFoundException} is thrown.
      * 
+     * @param name
+     *            The system-dependent file name.
      * @param input
      *            The instance of the monitored {@link FileInputStream}.
      * @param method
      *            The method that called the read operation.
-     * @throws IOException
-     *             If an I/O error occurs during the read of the file descriptor.
+     * @throws FileNotFoundException
+     *             if the file does not exist, is a directory rather than a regular file, or for some other reason cannot be opened for reading.
+     * @throws SecurityException
+     *             If a security manager exists and its checkRead method denies read access to the file.
      */
-    public FileInputStreamDelegate(FileInputStream input, MethodInfo method) throws IOException
+    public FileInputStreamDelegate(String name, FileInputStream input, MethodInfo method) throws FileNotFoundException
     {
-        this(input, new IOInfo(IOActivityType.READ, method));
+        super(name);
+        this.delegator = input;
+        this.info = new IOInfo(IOActivityType.READ, method);
+    }
+
+    /**
+     * 
+     * Creates a {@link FileInputStream} by opening a connection to an actual file, the file named by the {@link File} object file in the file system.
+     * A new {@link FileDescriptor} object is created to represent this file connection. First, if there is a security manager, its checkRead method
+     * is called with the path represented by the file argument as its argument.
+     * 
+     * If the named file does not exist, is a directory rather than a regular file, or for some other reason cannot be opened for reading then a
+     * {@link FileNotFoundException} is thrown.
+     * 
+     * @param file
+     *            The file to be opened for reading.
+     * @param input
+     *            The instance of the monitored {@link FileInputStream}.
+     * @param method
+     *            The method that called the read operation.
+     * @throws FileNotFoundException
+     *             if the file does not exist, is a directory rather than a regular file, or for some other reason cannot be opened for reading.
+     * @throws SecurityException
+     *             If a security manager exists and its checkRead method denies read access to the file.
+     */
+    public FileInputStreamDelegate(File file, FileInputStream input, MethodInfo method) throws FileNotFoundException
+    {
+        super(file);
+        this.delegator = input;
+        this.info = new IOInfo(IOActivityType.READ, method);
+    }
+
+    /**
+     * 
+     * Creates a {@link FileInputStream} by using the given file descriptor, which represents an existing connection to an actual file in the file
+     * system. If there is a security manager, its checkRead method is called with the file descriptor fdObj as its argument to see if it's ok to read
+     * the file descriptor. If read access is denied to the file descriptor a {@link SecurityException} is thrown.
+     * 
+     * If fdObj is null then a {@link NullPointerException} is thrown.
+     * 
+     * @param fdObj The file descriptor to be opened for reading.
+     * @param input
+     *            The instance of the monitored {@link FileInputStream}.
+     * @param method
+     *            The method that called the read operation.
+     * @throws SecurityException
+     *             If a security manager exists and its checkRead method denies read access to the file.
+     */
+    public FileInputStreamDelegate(FileDescriptor fdObj, FileInputStream input, MethodInfo method)
+    {
+        super(fdObj);
+        this.delegator = input;
+        this.info = new IOInfo(IOActivityType.READ, method);
     }
 
     @Override
@@ -76,13 +126,55 @@ public final class FileInputStreamDelegate extends FileInputStream
     @Override
     public int read() throws IOException
     {
-        return super.read();
+        return this.delegator.read();
     }
 
     @Override
     public int read(byte[] b) throws IOException
     {
-        return super.read(b);
+        return this.delegator.read(b);
+    }
+    
+    @Override
+    public int available() throws IOException
+    {
+        return this.delegator.available();
+    }
+
+    @Override
+    public void close() throws IOException
+    {
+        this.delegator.close();
+    }
+    
+    @Override
+    public FileChannel getChannel()
+    {
+        return super.getChannel();
+    }
+
+    @Override
+    public long skip(long n) throws IOException
+    {
+        return this.delegator.skip(n);
+    }
+
+    @Override
+    public synchronized void mark(int readlimit)
+    {
+        this.delegator.mark(readlimit);
+    }
+    
+    @Override
+    public boolean markSupported()
+    {
+        return this.delegator.markSupported();
+    }
+
+    @Override
+    public synchronized void reset() throws IOException
+    {
+        this.delegator.reset();
     }
 
     /**

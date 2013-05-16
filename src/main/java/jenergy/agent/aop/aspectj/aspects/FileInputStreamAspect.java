@@ -18,11 +18,10 @@
  */
 package jenergy.agent.aop.aspectj.aspects;
 
-import java.io.FileInputStream;
-
 import jenergy.agent.common.Cpu;
 import jenergy.agent.common.io.FileInputStreamDelegate;
 import jenergy.profile.data.MethodInfo;
+import jenergy.util.AspectjUtils;
 
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -32,10 +31,10 @@ import org.aspectj.lang.annotation.Aspect;
 public class FileInputStreamAspect
 {
     /**
-     * Around advice to replace all instances of {@link FileInputStream} by {@link FileInputStreamDelegate}. This is a runtime advice.
+     * Around advice to replace all instances of {@link java.io.FileInputStream} by {@link FileInputStreamDelegate}. This is a runtime advice.
      * 
      * @param thisJoinPoint
-     *            The joint point reference.
+     *            The joinpoint reference.
      * @return An instance of {@link FileInputStreamDelegate}.
      * @throws Throwable
      *             May throw any exceptions declared by the joinpoint itself. If this exception is not declared and is not a runtime exception, it
@@ -45,7 +44,9 @@ public class FileInputStreamAspect
     public Object invoke(final ProceedingJoinPoint thisJoinPoint) throws Throwable
     {
         MethodInfo method = Cpu.getInstance().currentThread().peekMethodInfo();
-        return new FileInputStreamDelegate((FileInputStream) thisJoinPoint.proceed(), method);
+        FileInputStreamDelegate instance = AspectjUtils.newInstance(thisJoinPoint, FileInputStreamDelegate.class, thisJoinPoint.proceed(), method);
+        instance.getClass().getDeclaredMethod("attach", jenergy.util.Observer.class).invoke(instance, instance.getInfo());
+        return instance;
     }
-    
+
 }

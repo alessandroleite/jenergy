@@ -38,7 +38,6 @@ import jenergy.util.time.Timer;
 
 public class ThreadProfiler implements Profiler
 {
-
     /**
      * The method statistics executed in this thread. The key is the method's name and the values is a {@link List} with the information about the
      * method execution.
@@ -48,7 +47,7 @@ public class ThreadProfiler implements Profiler
     /**
      * The stack trace of this thread.
      */
-    private final List<Method> stack = new CopyOnWriteArrayList<Method>();
+    private final List<MethodInfo> stack = new CopyOnWriteArrayList<MethodInfo>();
 
     /**
      * The Cpu instance of the thread.
@@ -174,8 +173,7 @@ public class ThreadProfiler implements Profiler
             this.threadMethods.put(method.getMethodName(), methodList);
         }
         
-        this.stack.add(method.getMethodRef());
-
+        this.stack.add(method);
         methodList.add(method);
     }
     
@@ -185,9 +183,9 @@ public class ThreadProfiler implements Profiler
      * 
      * @return An array of methods representing the stack dump of the thread.
      */
-    public Method[] getStackTrace()
+    public MethodInfo[] getStackTrace()
     {
-        Method[] stackTrace = new Method[this.stack.size()];
+        MethodInfo[] stackTrace = new MethodInfo[this.stack.size()];
 
         int size = this.stack.size() - 1;
         for (int i = size; i >= 0; i++)
@@ -199,19 +197,19 @@ public class ThreadProfiler implements Profiler
     }
     
     /**
-     * Removes the method of the head of this thread stack.
+     * Removes the method of the top of this thread stack and returns that {@link Method} as the value of this method.
      * @return The method removed or <code>null</code> if the stack is empty.
      */
-    public Method popStack()
+    public MethodInfo popStack()
     {
-        return this.stack.remove(this.stack.size() - 1);
+        return this.stack.isEmpty() ? null : this.stack.remove(this.stack.size() - 1);
     }
     
     /**
-     * Returns the method of the head (top) of this thread stack.
-     * @return The method of the head (top) of this thread stack or <code>null</code> if the stack is empty.
+     * Returns the method of the top of this thread stack.
+     * @return The method of the top of this thread stack or <code>null</code> if the stack is empty.
      */
-    public Method peekStack()
+    public MethodInfo peekStack()
     {
         return this.stack.get(this.stack.size() - 1);
     }
@@ -260,9 +258,9 @@ public class ThreadProfiler implements Profiler
             throw new NullPointerException("The method might not be null!");
         }
         
-        String caller = MethodInfo.formatMethodName(method.getDeclaringClass().getName(), method.getName());
+        String name = MethodInfo.formatMethodName(method.getDeclaringClass().getName(), method.getName());
         
-        return getMethodInfoOf(caller);
+        return getMethodInfoOf(name);
     }
     
     /**
@@ -288,7 +286,7 @@ public class ThreadProfiler implements Profiler
      */
     public MethodInfo peekMethodInfo()
     {
-        return getMethodInfoOf(this.peekStack());
+        return this.peekStack();
     }
 
     /**
