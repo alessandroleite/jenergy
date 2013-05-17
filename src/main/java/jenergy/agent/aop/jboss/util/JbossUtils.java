@@ -24,6 +24,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
+import jenergy.agent.common.util.ClassUtils;
+
 import org.jboss.aop.joinpoint.Invocation;
 
 public final class JbossUtils
@@ -75,18 +77,9 @@ public final class JbossUtils
     public static <T> T newInstance(Invocation thisJoinPoint, Class<T> clazz, Object... newArgs) throws NoSuchMethodException, SecurityException,
             InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException
     {
-        Constructor<?> constructor;
-        Object[] args;
 
-        try
-        {
-            constructor = getConstructor(thisJoinPoint.getClass().getSuperclass().getSuperclass(), thisJoinPoint);
-            args = getArgs(thisJoinPoint);
-        }
-        catch (Exception exception)
-        {
-            throw new RuntimeException(exception.getMessage(), exception);
-        }
+        final Constructor<?> constructor = ClassUtils.fieldValue("constructor", thisJoinPoint);
+        final Object[] args = getArgs(thisJoinPoint);
 
         Class<?>[] parameterTypes = new Class[constructor.getParameterTypes().length + (newArgs != null ? newArgs.length : 0)];
         Object[] newConstructorArgs = new Object[parameterTypes.length];
@@ -109,66 +102,6 @@ public final class JbossUtils
     }
 
     /**
-     * Returns the reference of the {@link Method} of the advice.
-     * 
-     * @param clazz
-     *            The class where the constructor is declared.
-     * @param invocation
-     *            The advice invocation.
-     * @param <T>
-     *            The class where the constructor was declared.
-     * @return The method of the advice. It will be <code>null</code> if the joinpoint's {@link Signature} is not a {@link MethodSignature}.
-     * @throws Exception
-     *             If it's not possible to invoke the private method in the JVM.
-     */
-    @SuppressWarnings("unchecked")
-    public static <T> Constructor<T> getConstructor(Class<?> clazz, Invocation invocation) throws Exception
-    {
-        return (Constructor<T>) getField(clazz, invocation, "constructor");
-    }
-
-    /**
-     * Returns the reference of the {@link Method} of the advice.
-     * 
-     * @param invocation
-     *            The advice invocation.
-     * @param name
-     *            The name of the field.
-     * @param <T>
-     *            The class where the constructor was declared.
-     * @return The method of the advice. It will be <code>null</code> if the joinpoint's {@link Signature} is not a {@link MethodSignature}.
-     * @throws Exception
-     *             If it's not possible to invoke the private method in the JVM.
-     */
-    public static <T> T getField(Invocation invocation, String name) throws Exception
-    {
-        return getField(invocation.getClass(), invocation, name);
-    }
-
-    /**
-     * Returns the reference of the {@link Method} of the advice.
-     * 
-     * @param clazz
-     *            The {@link Class} where the field is declared.
-     * @param invocation
-     *            The advice invocation.
-     * @param name
-     *            The name of the field.
-     * @param <T>
-     *            The class where the constructor was declared.
-     * @return The method of the advice. It will be <code>null</code> if the joinpoint's {@link Signature} is not a {@link MethodSignature}.
-     * @throws Exception
-     *             If it's not possible to invoke the private method in the JVM.
-     */
-    @SuppressWarnings("unchecked")
-    public static <T> T getField(Class<?> clazz, Invocation invocation, String name) throws Exception
-    {
-        Field field = clazz.getDeclaredField(name);
-        field.setAccessible(true);
-        return (T) field.get(invocation);
-    }
-
-    /**
      * Returns the arguments of the target method of the poincut. In this case, this method consider that each method argument is a field named
      * arg[0-9]*.
      * 
@@ -176,19 +109,30 @@ public final class JbossUtils
      *            The reference to the poincut.
      * @return The arguments of the target method of the poincut. In this case, this method consider that each method argument is a field named
      *         arg[0-9]*.
-     * @throws Exception If it's not possible to get the value of private fields in the JVM.
+     * @throws IllegalArgumentException
+     *             If the specified object is not an instance of the class or interface declaring the underlying field (or a subclass or implementor
+     *             thereof).
+     * @throws IllegalAccessException
+     *             If this Field object is enforcing Java language access control and the underlying field is inaccessible.
+     * 
      */
-    private static Object[] getArgs(Invocation invocation) throws Exception
+    private static Object[] getArgs(Invocation invocation) throws IllegalArgumentException, IllegalAccessException
     {
+        final Object[] arguments = ClassUtils.fieldValue("arguments", invocation);
+
+        if (arguments != null)
+        {
+            return arguments;
+        }
+
         List<Object> values = new ArrayList<Object>();
-        Field[] fields = invocation.getClass().getSuperclass().getDeclaredFields();
+        Field[] fields = ClassUtils.fields(invocation.getClass());
 
         for (int i = 0; i < fields.length; i++)
         {
             if (fields[i].getName().length() > 3 && fields[i].getName().startsWith("arg") && Character.isDigit(fields[i].getName().charAt(3)))
             {
-                fields[i].setAccessible(true);
-                values.add(fields[i].get(invocation));
+                values.add(ClassUtils.get(fields[i], invocation));
             }
         }
         return values.toArray();

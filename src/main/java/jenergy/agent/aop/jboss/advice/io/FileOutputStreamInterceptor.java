@@ -32,7 +32,7 @@ import org.jboss.aop.advice.Scope;
 import org.jboss.aop.joinpoint.Invocation;
 
 @InterceptorDef(scope = Scope.PER_VM)
-@Bind(pointcut = "call($instanceof{java.io.FileOutputStream}->new(..)) AND !call(jenergy.agent.*->new(..))")
+@Bind(pointcut = "call($instanceof{java.io.FileOutputStream}->new(..))")
 public final class FileOutputStreamInterceptor implements Interceptor
 {
     @Override

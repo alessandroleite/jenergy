@@ -16,42 +16,32 @@
  *    Contributors:
  *          Alessandro Ferreira Leite - the initial implementation.
  */
-package jenergy.profile;
+package jenergy.agent.common.io;
 
-public interface Profiler extends Runnable
+import jenergy.profile.data.Activity;
+import jenergy.profile.data.IOInfo;
+
+public class DiskActivity implements Activity<IOInfo>
 {
+
     /**
-     * Enum with the valid states of a profiler thread.
+     * The reference to the object that has the data (number of bytes read or wrote) by this disk activity.
      */
-    public static enum State
+    private final IOInfo data;
+
+    /**
+     * 
+     * @param ioInfo
+     *            The reference to the object that has the data (number of bytes read or wrote) by this disk activity. Might not be <code>null</code>.
+     */
+    public DiskActivity(IOInfo ioInfo)
     {
-        /**
-         * This state indicates that the profiler was just created but not started yet.
-         */
-        CREATED,
-
-        /**
-         * This states means that the profiler is active collecting execution data about some method.
-         */
-        RUNNING,
-
-        /**
-         * This states means that the profiler finished and it can't start again.
-         */
-        FINISHED;
+        this.data = ioInfo;
     }
 
-    /**
-     * Stops this profile.
-     */
-    void stop();
-    
-    /**
-     * Stops the profiler.
-     * 
-     * @param cpuTime
-     *            The CPU time of the thread.
-     */
-    void stop(long cpuTime);
-
+    @Override
+    public IOInfo data()
+    {
+        return data;
+    }
 }

@@ -65,6 +65,7 @@ public final class FileInputStreamDelegate extends FileInputStream
         super(name);
         this.delegator = input;
         this.info = new IOInfo(IOActivityType.READ, method);
+        method.addActivity(new DiskActivity(this.info));
     }
 
     /**
@@ -92,6 +93,7 @@ public final class FileInputStreamDelegate extends FileInputStream
         super(file);
         this.delegator = input;
         this.info = new IOInfo(IOActivityType.READ, method);
+        method.addActivity(new DiskActivity(this.info));
     }
 
     /**
@@ -115,6 +117,7 @@ public final class FileInputStreamDelegate extends FileInputStream
         super(fdObj);
         this.delegator = input;
         this.info = new IOInfo(IOActivityType.READ, method);
+        method.addActivity(new DiskActivity(this.info));
     }
 
     @Override
@@ -144,6 +147,7 @@ public final class FileInputStreamDelegate extends FileInputStream
     @Override
     public void close() throws IOException
     {
+        super.close();
         this.delegator.close();
     }
     

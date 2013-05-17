@@ -141,14 +141,16 @@ public final class Cpu
      * 
      * @param method
      *            The method to be profiled. Might not be <code>null</code>.
-     * @return The instance of the method profiler.
+     * @param caller
+     *            The reference to the method that called the given method.
+     * @return The instance for the method profiler.
      */
-    public MethodInfo monitor(Method method)
+    public MethodInfo monitor(Method method, MethodInfo caller)
     {
         synchronized (this.threads)
         {
-            MethodInfo profiler = new MethodInfo(method, Timer.createAndStart());
-            ThreadProfiler threadProfiler = this.threads.get(profiler.getThreadId());
+            MethodInfo profiler = new MethodInfo(method, Timer.createAndStart(), caller);
+            ThreadProfiler threadProfiler = this.threads.get(Thread.currentThread().getId());
 
             if (threadProfiler == null)
             {
@@ -189,7 +191,7 @@ public final class Cpu
 
             if (profiler == null)
             {
-                profiler = new ThreadProfiler(this, threadId, DEFAULT_TIME_SAMPLING);
+                profiler = new ThreadProfiler(threadId, DEFAULT_TIME_SAMPLING);
                 this.threads.put(threadId, profiler);
 
                 new Thread(profiler, "Thread times monitor-" + threadId).start();
@@ -198,15 +200,15 @@ public final class Cpu
         }
     }
 
-    /**
-     * Returns the {@link Cpu} power consumption.
-     * 
-     * @return The {@link Cpu} power consumption.
-     */
-    public double power()
-    {
-        return 10;
-    }
+    // /**
+    // * Returns the {@link Cpu} power consumption.
+    // *
+    // * @return The {@link Cpu} power consumption.
+    // */
+    // public double power()
+    // {
+    // return 10;
+    // }
 
     /**
      * Returns the power consumption of a given thread.

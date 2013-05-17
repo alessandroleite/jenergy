@@ -21,6 +21,7 @@ package jenergy.profile;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -28,7 +29,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import jenergy.agent.common.Cpu;
 import jenergy.agent.common.util.Threads;
 import jenergy.agent.common.util.time.Timer;
 import jenergy.profile.data.MethodInfo;
@@ -49,10 +49,10 @@ public class ThreadProfiler implements Profiler
      */
     private final List<MethodInfo> stack = new CopyOnWriteArrayList<MethodInfo>();
 
-    /**
-     * The Cpu instance of the thread.
-     */
-    private final Cpu cpu;
+//    /**
+//     * The Cpu instance of the thread.
+//     */
+//    private final Cpu cpu;
 
     /**
      * The information about the thread execution.
@@ -62,7 +62,7 @@ public class ThreadProfiler implements Profiler
     /**
      * The interval to collect the data.
      */
-    private final long timeSample;
+    private final long cycle;
 
     /**
      * The flag to indicate if the thread must be continue running.
@@ -72,18 +72,15 @@ public class ThreadProfiler implements Profiler
     /**
      * Creates a new {@link ThreadProfiler} instance with the CPU and thread id.
      * 
-     * @param threadCpu
-     *            The thread's CPU. Might not be <code>null</code>.
      * @param tid
      *            The thread id. Might not be <code>null</code>.
      * @param timeSampling
      *            The time sampling of this thread.
      */
-    public ThreadProfiler(Cpu threadCpu, Long tid, Long timeSampling)
+    public ThreadProfiler(Long tid, Long timeSampling)
     {
-        this.cpu = threadCpu;
         threadInfo = new ThreadInfo(tid, Timer.createAndStart());
-        this.timeSample = timeSampling;
+        this.cycle = timeSampling;
     }
 
     @Override
@@ -92,8 +89,21 @@ public class ThreadProfiler implements Profiler
         while (active)
         {
             update();
-            Threads.sleep(timeSample, true);
+            Threads.sleep(cycle, true);
         }
+    }
+    
+    @Override
+    public void stop()
+    {
+        this.active = Boolean.FALSE;
+    }
+    
+    @Override
+    public void stop(long cpuTime)
+    {
+        stop();
+        this.onThreadStop(cpuTime);
     }
 
     /**
@@ -127,7 +137,6 @@ public class ThreadProfiler implements Profiler
                 getThreadInfo().getTimes().getCpuTime().setEndTime(cpuTime);
                 getThreadInfo().getTimes().getUserTime().setEndTime(userTime);
             }
-            // computeThreadPowerConsumption(cpuTime);
         }
     }
 
@@ -143,18 +152,25 @@ public class ThreadProfiler implements Profiler
         if (this.getThreadInfo().getCpuInfo().cycleDuration() > 0)
         {
             long threadCpuTime = threadInfo.getTimes().getCpuTime().time() == 0 ? cpuTime : threadInfo.getTimes().getCpuTime().time();
-            double threadCpuPower = Timer.nanoToMillis(threadCpuTime) * this.cpu.power() / 
+            double threadCpuPower = Timer.nanoToMillis(threadCpuTime) /* * this.cpu.power()*/ / 
                     Timer.nanoToMillis(this.getThreadInfo().getCpuInfo().cycleDuration());
 
             return threadCpuPower;
         }
         return 0d;
     }
-
-    @Override
-    public void stop()
+    
+    
+    /**
+     * @param cpuTime
+     *            The CPU time of the thread.
+     */
+    public void onThreadStop(long cpuTime) 
     {
-        this.active = Boolean.FALSE;
+        this.getThreadInfo().setPower(BigDecimal.valueOf(this.computeThreadPowerConsumption(cpuTime)));
+        Map<String, MethodStatistics> methodsStatistics = this.computeCpuPowerConsumptionOfThreadMethods();
+        // @throws IOException If the output file does not exist or the user does not have enough permission.
+        // OutputFile.write(methodsStatistics, this);
     }
 
     /**
@@ -224,23 +240,23 @@ public class ThreadProfiler implements Profiler
         return this.threadMethods.get(methodName);
     }
     
-    /**
-     * Returns the caller of the given method.
-     * 
-     * @param method The method to return the caller.
-     * @return The caller of the given method.
-     */
-    public MethodInfo getCallerOf(MethodInfo method)
-    {
-        if (method != null && method.getCalleeMethod() != null)
-        {
-            String caller = MethodInfo.formatMethodName(method.getCalleeMethod().getClassName(), method.getCalleeMethod().getMethodName());
-            List<MethodInfo> methodStack = getMethodInfoByName(caller);
-
-            return methodStack.get(methodStack.size() - 1);
-        }
-        return new MethodInfo("<null method>", Timer.createAndStart());
-    }
+//    /**
+//     * Returns the caller of the given method.
+//     * 
+//     * @param method The method to return the caller.
+//     * @return The caller of the given method.
+//     */
+//    public MethodInfo getCallerOf(MethodInfo method)
+//    {
+//        if (method != null && method.getCalleeMethod() != null)
+//        {
+//            String caller = MethodInfo.formatMethodName(method.getCalleeMethod().getClassName(), method.getCalleeMethod().getMethodName());
+//            List<MethodInfo> methodStack = getMethodInfoByName(caller);
+//
+//            return methodStack.get(methodStack.size() - 1);
+//        }
+//        return new MethodInfo("<null method>", Timer.createAndStart());
+//    }
 
     /**
      * Returns a reference to the {@link MethodInfo} of the given {@link Method}.

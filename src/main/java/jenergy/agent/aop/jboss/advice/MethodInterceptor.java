@@ -26,7 +26,6 @@ import org.jboss.aop.advice.Scope;
 import org.jboss.aop.joinpoint.Invocation;
 import org.jboss.aop.joinpoint.MethodInvocation;
 
-//!execution(* jenergy.agent.aop.advice.*->*(..))
 @org.jboss.aop.Bind(pointcut = "execution(* *->*(..)) AND !execution(* jenergy.*->*(..)) AND !execution(* sun.*->*(..)) " +
          "AND !execution(* java.*->*(..)) AND !execution(* org.jboss.*->*(..)) AND !execution(* javassist.*->*(..)) " +
          "AND !execution(* org.apache.*->*(..))")

@@ -38,7 +38,8 @@ public final class Agent
      * This method is called JVM had been initialized. After that, then the main method of the target application will be called.
      * 
      * @param agentArgs
-     *            The agent's arguments. This agent does not require any argument.
+     *            The agent's arguments. The argument required is the name of the AOP strategy to be used. It can be aspectj or jboss-aop. The default
+     *            is aspectj.
      * @param inst
      *            The instrumentation mechanism provides by the JVM.
      */
@@ -53,5 +54,4 @@ public final class Agent
             jenergy.agent.aop.jboss.Agent.premain(agentArgs, inst);
         }
     }
-
 }

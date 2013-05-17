@@ -8,9 +8,10 @@
 	<packaging>jar</packaging>
 	<version>0.0.1-SNAPSHOT</version>
 
-	<name>JEnergy</name>
-	<description>A profiler to dynamically measure the energy consumption of a Java(tm) library/application 
-	 considering the use of the resources: CPU, memory, network and disk.
+	<name>JEnergy Profiler Tool</name>
+	
+	<description>
+	     A profiler to dynamically measure the energy consumption of a Java(tm) library/application considering the use of CPU, memory, network and disk.
 	</description>
 
 	<properties>
@@ -115,14 +116,8 @@
 			<artifactId>aspectjweaver</artifactId>
 			<version>${aspectjweaver.version}</version>
 		</dependency>
-
-		<dependency>
-			<groupId>commons-beanutils</groupId>
-			<artifactId>commons-beanutils</artifactId>
-			<version>${commons-beanutils.version}</version>
-		</dependency>
-
 	</dependencies>
+	
 	<build>
 		<defaultGoal>package</defaultGoal>
 		<resources>
@@ -195,6 +190,7 @@
 						<exclude>**/checkstyle.xml</exclude>
 						<exclude>**/.checkstyle</exclude>
 						<exclude>**/.gitignore</exclude>
+						<exclude>**/.csv</exclude>
 					</excludes>
 					<strictCheck>true</strictCheck>
 				</configuration>

@@ -21,13 +21,9 @@ package jenergy.agent.aop.advice;
 import java.lang.management.ManagementFactory;
 import java.lang.management.ThreadMXBean;
 import java.lang.reflect.Method;
-import java.math.BigDecimal;
-import java.util.Map;
 
 import jenergy.agent.common.Cpu;
-import jenergy.agent.common.util.OutputFile;
 import jenergy.profile.data.MethodInfo;
-import jenergy.profile.data.MethodStatistics;
 import jenergy.profile.data.Period;
 import jenergy.profile.data.Times;
 
@@ -58,7 +54,7 @@ public abstract class MethodExecutionInterceptor
             caller = Cpu.getInstance().getThreadProfiler(tid).peekMethodInfo();
         } 
         
-        final MethodInfo called = Cpu.getInstance().monitor(method);
+        final MethodInfo called = Cpu.getInstance().monitor(method, caller);
         
         called.setTimes(new Times(tid));
 
@@ -94,18 +90,8 @@ public abstract class MethodExecutionInterceptor
 
             if ("main".equalsIgnoreCase(method.getName()))
             {
-                Cpu.getInstance().getThreadProfiler(tid).stop();
+                Cpu.getInstance().getThreadProfiler(tid).stop(called.getTimes().getUserTime().time());
                 Cpu.getInstance().getThread(tid).getTimer().stop();
-
-                double power = Cpu.getInstance().getThreadProfiler(tid).computeThreadPowerConsumption(called.getTimes().getUserTime().time());
-                Cpu.getInstance().getThreadProfiler(tid).getThreadInfo().setPower(BigDecimal.valueOf(power));
-
-                Map<String, MethodStatistics> methodsStatistics = Cpu.getInstance().getThreadProfiler(tid)
-                        .computeCpuPowerConsumptionOfThreadMethods();
-
-                OutputFile.write(methodsStatistics, Cpu.getInstance().getThreadProfiler(tid));
-
-                System.out.println("--- main ---");
             }
             
             if (caller != null)

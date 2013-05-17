@@ -18,11 +18,10 @@
  */
 package jenergy.agent.aop.jboss.advice.io;
 
-import java.io.FileInputStream;
-
-import jenergy.agent.aop.jboss.util.JbossUtils;
 import jenergy.agent.common.Cpu;
-import jenergy.agent.common.io.FileInputStreamDelegate;
+import jenergy.agent.common.io.DiskActivity;
+import jenergy.profile.data.IOInfo;
+import jenergy.profile.data.IOInfo.IOActivityType;
 import jenergy.profile.data.MethodInfo;
 
 import org.jboss.aop.Bind;
@@ -32,8 +31,8 @@ import org.jboss.aop.advice.Scope;
 import org.jboss.aop.joinpoint.Invocation;
 
 @InterceptorDef(scope = Scope.PER_VM)
-@Bind(pointcut = "call($instanceof{java.io.FileInputStream}->new(..))")
-public class FileInputStreamInterceptor implements Interceptor
+@Bind(pointcut = "execution(* $instanceof{java.io.InputStream}->*(..)) and !execution(* jenergy.*->*(..))")
+public class InputStreamInterceptor implements Interceptor
 {
     @Override
     public String getName()
@@ -44,15 +43,18 @@ public class FileInputStreamInterceptor implements Interceptor
     @Override
     public Object invoke(Invocation invocation) throws Throwable
     {
+//        MethodInvocation methodInvocation = (MethodInvocation) invocation;
         Object result = invocation.invokeNext();
-
-        if (result != null && FileInputStream.class.isAssignableFrom(result.getClass()))
+        
+        MethodInfo caller = Cpu.getInstance().currentThread().peekMethodInfo();
+        
+        if (result != null && Integer.class.isAssignableFrom(result.getClass()))
         {
-            MethodInfo method = Cpu.getInstance().currentThread().peekMethodInfo();
-            result = JbossUtils.newInstance(invocation, FileInputStreamDelegate.class, result, method);
-            result.getClass().getDeclaredMethod("attach", jenergy.agent.common.util.Observer.class)
-                    .invoke(result, ((FileInputStreamDelegate) result).getInfo());
+            IOInfo data = new IOInfo(IOActivityType.READ, caller);
+            caller.addActivity(new DiskActivity(data));
         }
-        return result;
+        
+       return null;
     }
+
 }

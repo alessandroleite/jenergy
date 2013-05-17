@@ -23,12 +23,12 @@ import java.io.Serializable;
 import jenergy.agent.common.util.Observer;
 import jenergy.agent.common.util.Subject;
 
-public class IOInfo implements Serializable, Observer
+public final class IOInfo implements Serializable, Observer
 {
     /**
      * Serial code version <code>serialVersionUID</code> for serialization.
      */
-    private static final long serialVersionUID = -8633571924453299948L;
+    private static final long serialVersionUID = 3189830920853626190L;
 
     /**
      * Enumeration with the type of I/O operations.
@@ -90,7 +90,7 @@ public class IOInfo implements Serializable, Observer
      * @param value
      *            The number of bytes that has been read/written.
      */
-    protected synchronized void increment(long value)
+    public synchronized void increment(long value)
     {
         if (value > 0)
         {
@@ -134,6 +134,9 @@ public class IOInfo implements Serializable, Observer
     @Override
     public void update(Subject observable, Object... args)
     {
-        this.increment(((Integer) args[0]).longValue());
+        if (args != null && args.length > 0 && Integer.class.isAssignableFrom(args[0].getClass()))
+        {
+            this.increment(((Integer) args[0]).longValue());
+        }
     }
 }

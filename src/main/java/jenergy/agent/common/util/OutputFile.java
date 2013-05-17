@@ -42,9 +42,9 @@ public final class OutputFile
     /**
      * 
      * @param statistics
-     *            The {@link MethodStatistics} to be written in the output.
+     *            The {@link MethodStatistics} to be write in the output.
      * @param threadInfo
-     *            The data about the {@link Thread} which the methods were executed.
+     *            The reference to the {@link Thread} which methods were executed.
      * @throws IOException
      *             If the output file does not exists.
      */

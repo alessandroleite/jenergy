@@ -21,6 +21,9 @@ package jenergy.profile.data;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import jenergy.agent.common.util.time.Timer;
 
@@ -29,8 +32,8 @@ public final class MethodInfo implements Serializable
     /**
      * Serial code version <code>serialVersionUID</code> for serialization.
      */
-    private static final long serialVersionUID = -8180872209687559622L;
-    
+    private static final long serialVersionUID = -9103595975148819796L;
+
     /**
      * The method timer.
      */
@@ -52,40 +55,38 @@ public final class MethodInfo implements Serializable
     private long threadId;
 
     /**
-     * The cpu power consumption.
+     * The estimated CPU power consumption.
      */
-    private BigDecimal cpuPower;
+    private BigDecimal cpuPowerConsumption;
 
     /**
-     * The data about the caller.
+     * The reference to the caller method.
      */
-    private final StackTraceElement calleeMethod;
+    private final MethodInfo caller;
 
     /**
-     * The reference of the monitored method.
+     * The reference to the monitored method.
      */
     private Method methodRef;
+
+    /**
+     * The {@link List} of activities realized by the monitored method. For instance, network activity, disk activity, etc.
+     */
+    private final List<Activity<?>> activities = new CopyOnWriteArrayList<Activity<?>>();
 
     /**
      * @param name
      *            The name of the method to be analyzed.
      * @param methodTimer
      *            The {@link Timer} with the information about the execution time of the method.
+     * @param callerOfThisMethod
+     *            The reference to method that called this method.
      */
-    public MethodInfo(String name, Timer methodTimer)
+    public MethodInfo(String name, Timer methodTimer, MethodInfo callerOfThisMethod)
     {
         this.methodName = name;
         this.timer = methodTimer;
-
-        StackTraceElement[] stackFrames = Thread.currentThread().getStackTrace();
-        if (stackFrames != null && stackFrames.length > 0)
-        {
-            calleeMethod = stackFrames[stackFrames.length - 1];
-        }
-        else
-        {
-            calleeMethod = null;
-        }
+        this.caller = callerOfThisMethod;
     }
 
     /**
@@ -96,10 +97,12 @@ public final class MethodInfo implements Serializable
      *            The start time of the method execution.
      * @param tid
      *            The thread id.
+     * @param callerOfThisMethod
+     *            The reference to method that called this method.
      */
-    public MethodInfo(String name, Timer methodTimer, long tid)
+    public MethodInfo(String name, Timer methodTimer, long tid, MethodInfo callerOfThisMethod)
     {
-        this(name, methodTimer);
+        this(name, methodTimer, callerOfThisMethod);
         this.threadId = tid;
     }
 
@@ -109,11 +112,27 @@ public final class MethodInfo implements Serializable
      *            The method that is monitored.
      * @param methodTimer
      *            The timer to measure the method execution.
+     * @param callerOfThisMethod
+     *            The reference to method that called this method.
      */
-    public MethodInfo(Method method, Timer methodTimer)
+    public MethodInfo(Method method, Timer methodTimer, MethodInfo callerOfThisMethod)
     {
-        this(formatMethodName(method.getDeclaringClass(), method.getName()), methodTimer, Thread.currentThread().getId());
+        this(formatMethodName(method.getDeclaringClass(), method.getName()), methodTimer, Thread.currentThread().getId(), callerOfThisMethod);
         this.methodRef = method;
+    }
+    
+    /**
+     * @param activity
+     *            The activity to be add. Might not be <code>null</code>.
+     * @param <T>
+     *            The type of the data of the given activity.
+     */
+    public <T> void addActivity(Activity<T> activity)
+    {
+        if (activity != null)
+        {
+            this.activities.add(activity);
+        }
     }
 
     /**
@@ -146,18 +165,18 @@ public final class MethodInfo implements Serializable
     /**
      * @return the cpuPower
      */
-    public BigDecimal getCpuPower()
+    public BigDecimal getCpuPowerConsumption()
     {
-        return cpuPower;
+        return cpuPowerConsumption;
     }
 
     /**
      * @param newCpuPowerValue
      *            the cpuPower to set
      */
-    public void setCpuPower(BigDecimal newCpuPowerValue)
+    public void setCpuPowerConsumption(BigDecimal newCpuPowerValue)
     {
-        this.cpuPower = newCpuPowerValue;
+        this.cpuPowerConsumption = newCpuPowerValue;
     }
 
     /**
@@ -175,7 +194,7 @@ public final class MethodInfo implements Serializable
     {
         return methodName;
     }
-    
+
     /**
      * @return the methodRef
      */
@@ -193,11 +212,21 @@ public final class MethodInfo implements Serializable
     }
 
     /**
-     * @return the calleeMethod
+     * @return the caller
      */
-    public StackTraceElement getCalleeMethod()
+    public MethodInfo getCaller()
     {
-        return calleeMethod;
+        return caller;
+    }
+    
+    /**
+     * Returns a non <code>null</code> and read-only {@link List} with the activities realized by this method.
+     * 
+     * @return A non <code>null</code> and read-only {@link List} with the activities realized by this method.
+     */
+    public List<Activity<?>> getActivities()
+    {
+        return Collections.unmodifiableList(activities);
     }
 
     @Override
@@ -213,27 +242,28 @@ public final class MethodInfo implements Serializable
         sb.append("Timer......:").append(this.getTimer()).append(line);
         // sb.append("CPU time...:").append(this.getTimes().getCpuTime()).append(line);
         // sb.append("User time..:").append(this.getTimes().getUserTime()).append(line);
-        sb.append("Power......:").append(this.getCpuPower()).append(line);
+        sb.append("Power......:").append(this.getCpuPowerConsumption()).append(line);
 
         return sb.toString();
     }
 
     /**
-     * Format and returns the name of the method. The format is: <class name>.<method name>#<thread id>.
+     * Formats and returns the name of the method. The format is: <class name>.<method name>#<thread id>.
      * 
      * @param methodClass
      *            The class where the method was declared.
      * @param methodName
      *            The method name.
      * @return The name of the method. The format is: <class name>.<method name>#<thread id>.
+     * @see #formatMethodName(String, String)
      */
     public static String formatMethodName(Class<?> methodClass, String methodName)
     {
-        return new StringBuilder(methodClass.getName()).append(".").append(methodName).append("#").append(Thread.currentThread().getId()).toString();
+        return formatMethodName(methodClass.getName(), methodName);
     }
-    
+
     /**
-     * Format and returns the name of the method. The format is: <class name>.<method name>#<thread id>.
+     * Formats and returns the name of the method. The format is: <class name>.<method name>#<thread id>.
      * 
      * @param className
      *            The name of the {@link Class} where the method was declared.
@@ -245,5 +275,5 @@ public final class MethodInfo implements Serializable
     {
         return new StringBuilder(className).append(".").append(methodName).append("#").append(Thread.currentThread().getId()).toString();
     }
-    
+
 }

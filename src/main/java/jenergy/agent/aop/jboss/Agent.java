@@ -47,6 +47,9 @@ public final class Agent
     {
         ProfileConfig.start();
 
+        //String exclude = System.getProperty("jboss.aop.exclude");
+        //System.setProperty("jboss.aop.exclude", "jenergy" + (exclude != null ? "," + exclude : ""));
+        
         System.setProperty("jboss.aop.class.path", ClassUtils.getClassLocation(Agent.class));
 
         if (agentArgs != null && (agentArgs.indexOf(".jar") != -1 || (agentArgs.indexOf("/") != -1)))
@@ -56,6 +59,6 @@ public final class Agent
         }
         
         Cpu.getInstance().activate();
-        org.jboss.aop.standalone.Agent.premain("-hotSwap", inst);
+        org.jboss.aop.standalone.Agent.premain(agentArgs + " -hotSwap", inst);
     }
 }
