@@ -23,24 +23,20 @@ public privileged aspect InputStreamAspect
     
     public static interface B
     {
-        
     }
     
-    declare parents : java.net.URL implements B; 
+   // declare parents : java.net.URL implements B;
     
-    //declare parents : type_pattern extends type;
-    
-
-    after() returning (int x): execution(java.io.InputStream java.net.URL+.openStream(..)) && !within(jenergy..*)
-    {
-        System.out.println(x);
-    }
+//    after() returning (int x): execution(java.io.InputStream java.net.URL+.openStream(..)) && !within(jenergy..*)
+//    {
+//        System.out.println(x);
+//    }
 
     Object around(): call(* java.io.InputStream+.read(..)) && !within(jenergy..*)
     {
-        Object target = thisJoinPoint.getTarget();
-        System.out.println(target);
-        System.out.println("=== called === ");
+//        Object target = thisJoinPoint.getTarget();
+//        System.out.println(target.getClass());
+//        System.out.println("=== called === ");
         Object result = proceed(); 
         System.out.println(result);
         return result;

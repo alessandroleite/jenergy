@@ -35,7 +35,7 @@ public final class TraceAspect extends MethodExecutionInterceptor
      *            The joint point reference.
      * @return The result value. This value will be returned as result of the call to method {@link #proceed(Object)}.
      * @throws Throwable
-     *             May throw any exceptions declared by the joinpoint itself. If this exception is not declared and is not a runtime exception, it
+     *             May throw any exceptions declared by the join point itself. If this exception is not declared and is not a runtime exception, it
      *             will be encapsulated in a {@link RuntimeException} before being thrown to the basis system.
      */
     @org.aspectj.lang.annotation.Around("execution(* *(..)) && !within(jenergy..*)")

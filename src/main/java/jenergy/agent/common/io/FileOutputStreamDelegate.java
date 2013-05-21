@@ -63,7 +63,6 @@ public final class FileOutputStreamDelegate extends FileOutputStream
         super(name);
         this.delegator = output;
         this.info = new IOInfo(IOActivityType.WRITE, methodInfo);
-        //ClassUtils.copyProperties(this.delegator, this);
     }
 
     /**
@@ -89,7 +88,6 @@ public final class FileOutputStreamDelegate extends FileOutputStream
         super(file);
         this.delegator = output;
         this.info = new IOInfo(IOActivityType.WRITE, methodInfo);
-        //ClassUtils.copyProperties(this.delegator, this);
     }
 
     /**
@@ -114,7 +112,6 @@ public final class FileOutputStreamDelegate extends FileOutputStream
         super(fd);
         this.delegator = output;
         this.info = new IOInfo(IOActivityType.WRITE, methodInfo);
-        //ClassUtils.copyProperties(this.delegator, this);
     }
 
     /**
@@ -144,7 +141,6 @@ public final class FileOutputStreamDelegate extends FileOutputStream
         super(name, append);
         this.delegator = output;
         this.info = new IOInfo(IOActivityType.WRITE, methodInfo);
-        //ClassUtils.copyProperties(this.delegator, this);
     }
 
     /**
@@ -172,7 +168,6 @@ public final class FileOutputStreamDelegate extends FileOutputStream
         super(file, append);
         this.delegator = output;
         this.info = new IOInfo(IOActivityType.WRITE, methodInfo);
-        //ClassUtils.copyProperties(this.delegator, this);
     }
 
     @Override
@@ -213,8 +208,8 @@ public final class FileOutputStreamDelegate extends FileOutputStream
     @Override
     public void flush() throws IOException
     {
-        this.delegator.flush();
         super.flush();
+        this.delegator.flush();
     }
 
     @Override

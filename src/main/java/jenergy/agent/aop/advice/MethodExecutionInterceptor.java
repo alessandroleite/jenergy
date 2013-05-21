@@ -31,13 +31,13 @@ public abstract class MethodExecutionInterceptor
 {
     /**
      * @param method
-     *            Represents the joinpoint to be intercepted.
+     *            Represents the join point to be intercepted.
      * @param invoker
      *            Represents the instance of the AOP advice that has the information about the joinpoint to be used in the {@link #proceed(Object)}
      *            method.
      * @return The result value. This value will be returned as result of the call to method {@link #proceed(Object)}.
      * @throws Throwable
-     *             May throw any exceptions declared by the joinpoint itself. If this exception is not declared and is not a runtime exception, it
+     *             May throw any exceptions declared by the join point itself. If this exception is not declared and is not a runtime exception, it
      *             will be encapsulated in a {@link RuntimeException} before being thrown to the basis system.
      */
     public Object invokeAdvice(Method method, Object invoker) throws Throwable
@@ -108,7 +108,7 @@ public abstract class MethodExecutionInterceptor
      *            Represents the instance of the AOP advice.
      * @return The result value. This value will be returned to the interceptor/advice as a result of the specific method of the AOP library.
      * @throws Throwable
-     *             May throw any exceptions declared by the joinpoint itself. If this exception is not declared and is not a runtime exception, it
+     *             May throw any exceptions declared by the join point itself. If this exception is not declared and is not a runtime exception, it
      *             will be encapsulated in a {@link RuntimeException} before being thrown to the basis system.
      */
     protected abstract Object proceed(Object invoker) throws Throwable;
